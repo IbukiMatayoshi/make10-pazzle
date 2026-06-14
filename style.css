@@ -1,18 +1,39 @@
-:root {
+/* ダークテーマ変数 */
+.dark-theme {
   --primary-color: #4a90e2;
   --success-color: #2ec4b6;
   --danger-color: #e71d36;
   --warning-color: #ff9f1c;
-  --bg-color: #1a1a22 !important;
-  --panel-bg: #0f0f14 !important;
-  --card-bg: #252533 !important;
-  --text-main: #ffffff !important;
-  --text-sub: #aaaaaa !important;
+  --bg-color: #1a1a22;
+  --panel-bg: #0f0f14;
+  --card-bg: #252533;
+  --text-main: #ffffff;
+  --text-sub: #aaaaaa;
+  --border-color: #3a3a4f;
+  --formula-bg: #08080c;
+}
+
+/* ライトテーマ変数 */
+.light-theme {
+  --primary-color: #1a62b8;
+  --success-color: #0f9f90;
+  --danger-color: #c61a2e;
+  --warning-color: #d97706;
+  --bg-color: #e5e7eb;
+  --panel-bg: #ffffff;
+  --card-bg: #f3f4f6;
+  --text-main: #1f2937;
+  --text-sub: #4b5563;
+  --border-color: #d1d5db;
+  --formula-bg: #f9fafb;
 }
 
 * {
   box-sizing: border-box;
-  color-scheme: dark;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease,
+    border-color 0.3s ease;
 }
 
 body {
@@ -31,11 +52,32 @@ body {
   background-color: var(--panel-bg);
   padding: 25px;
   border-radius: 20px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
   width: 100%;
   max-width: 480px;
   text-align: center;
   position: relative;
+}
+
+/* テーマ切り替えボタン */
+.btn-theme-toggle {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+}
+.btn-theme-toggle:hover {
+  background-color: rgba(128, 128, 128, 0.1);
 }
 
 h1 {
@@ -43,7 +85,6 @@ h1 {
   font-size: 26px;
   letter-spacing: 2px;
   color: var(--primary-color);
-  text-shadow: 0 0 10px rgba(74, 144, 226, 0.3);
 }
 
 .status-container {
@@ -51,10 +92,10 @@ h1 {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 15px;
-  background: #181822;
+  background: rgba(128, 128, 128, 0.05);
   padding: 10px 15px;
   border-radius: 12px;
-  border: 1px solid #2a2a3a;
+  border: 1px solid var(--border-color);
 }
 
 .score-box {
@@ -81,7 +122,7 @@ h1 {
 .gauge-container {
   width: 100%;
   height: 6px;
-  background-color: #222;
+  background-color: rgba(128, 128, 128, 0.2);
   border-radius: 3px;
   margin-bottom: 15px;
   overflow: hidden;
@@ -105,8 +146,8 @@ select,
   font-size: 14px;
   padding: 8px 14px;
   border-radius: 8px;
-  border: 1px solid #333;
-  background-color: #222;
+  border: 1px solid var(--border-color);
+  background-color: var(--card-bg);
   color: var(--text-main);
   cursor: pointer;
 }
@@ -121,10 +162,10 @@ select,
   background-color: rgba(231, 29, 54, 0.1);
 }
 .btn-giveup:disabled {
-  border-color: #333;
-  color: #555;
+  border-color: var(--border-color);
+  color: var(--text-sub);
   cursor: not-allowed;
-  background: transparent;
+  opacity: 0.5;
 }
 .btn-pause {
   border: 1px solid var(--primary-color);
@@ -136,14 +177,15 @@ select,
   background-color: transparent;
 }
 .btn-pause:disabled {
-  border-color: #333;
-  color: #555;
+  border-color: var(--border-color);
+  color: var(--text-sub);
   cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .reference-table {
-  background-color: #15151f;
-  border: 1px solid #2a2a35;
+  background-color: rgba(128, 128, 128, 0.03);
+  border: 1px solid var(--border-color);
   border-radius: 10px;
   padding: 8px;
   margin-bottom: 15px;
@@ -156,7 +198,8 @@ select,
   min-height: 37px;
 }
 .ref-item {
-  background: #20202c;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
   padding: 2px 6px;
   border-radius: 5px;
   border-bottom: 2px solid var(--primary-color);
@@ -169,10 +212,13 @@ select,
   font-size: 18px;
   font-weight: bold;
   margin-bottom: 15px;
-  background: linear-gradient(135deg, #1f1f2e, #14141f);
+  background: linear-gradient(135deg, var(--card-bg), var(--panel-bg));
   padding: 12px;
   border-radius: 12px;
   border-left: 5px solid var(--success-color);
+  border-top: 1px solid var(--border-color);
+  border-right: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .card-container {
@@ -183,7 +229,7 @@ select,
 }
 .card {
   background-color: var(--card-bg);
-  border: 2px solid #3a3a4f;
+  border: 2px solid var(--border-color);
   border-radius: 14px;
   flex: 1;
   aspect-ratio: 3/4;
@@ -192,19 +238,17 @@ select,
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   user-select: none;
-  transition: all 0.2s ease;
 }
 .card:hover {
   transform: translateY(-2px);
   border-color: var(--primary-color);
-  box-shadow: 0 0 12px rgba(74, 144, 226, 0.4);
 }
 .card.used {
-  background-color: #12121a !important;
-  border-color: #222 !important;
-  color: #444455 !important;
+  background-color: rgba(128, 128, 128, 0.1) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-sub) !important;
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
@@ -221,18 +265,19 @@ select,
   font-weight: normal;
 }
 .card.used .card-hint-text {
-  color: #444455 !important;
+  color: var(--text-sub) !important;
+  opacity: 0.5;
 }
 
 .formula-box {
-  border: 2px solid #252533;
+  border: 2px solid var(--border-color);
   padding: 12px;
   min-height: 48px;
   font-size: 24px;
   font-weight: bold;
   margin-bottom: 8px;
   border-radius: 12px;
-  background-color: #08080c;
+  background-color: var(--formula-bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -272,12 +317,11 @@ select,
   font-weight: bold;
   border-radius: 8px;
   cursor: pointer;
-  box-shadow: 0 4px 10px rgba(74, 144, 226, 0.3);
-  transition: transform 0.1s;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 .btn-next-stage:hover {
   transform: scale(1.04);
-  background-color: #357abd;
+  opacity: 0.9;
 }
 
 .keyboard-layout {
@@ -306,27 +350,23 @@ select,
   cursor: pointer;
 }
 .btn-op {
-  background-color: #2d2d3d;
+  background-color: var(--card-bg);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
 }
 .btn-op:hover {
-  background-color: #3d3d52;
+  background-color: rgba(128, 128, 128, 0.1);
 }
 .btn-back {
   background-color: var(--warning-color);
   font-size: 15px;
   flex: 1;
-  color: #000;
-}
-.btn-back:hover {
-  background-color: #e08b14;
+  color: #fff;
 }
 .btn-clear {
   background-color: var(--danger-color);
   font-size: 13px;
   flex: 1;
-}
-.btn-clear:hover {
-  background-color: #c61a2e;
 }
 
 .overlay {
@@ -336,13 +376,14 @@ select,
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(10, 10, 15, 0.96);
+  background-color: var(--panel-bg);
   border-radius: 20px;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   z-index: 10;
   padding: 25px;
+  border: 2px solid var(--border-color);
 }
 .overlay h2 {
   font-size: 32px;
@@ -372,18 +413,16 @@ select,
   font-weight: bold;
   cursor: pointer;
   width: 100%;
-  transition: transform 0.1s;
 }
 .btn-trigger:hover {
-  transform: scale(1.03);
+  transform: scale(1.02);
 }
 .btn-main-trigger {
   background-color: var(--success-color);
-  color: #000;
-  box-shadow: 0 0 15px rgba(46, 196, 182, 0.3);
+  color: #fff;
 }
 .btn-sub-trigger {
-  background-color: #222;
+  background-color: var(--card-bg);
   border: 1px solid var(--danger-color);
   color: var(--danger-color);
 }
@@ -394,8 +433,8 @@ select,
   padding: 12px 20px;
   border-radius: 10px;
   border: 2px solid var(--primary-color);
-  background-color: #111;
-  color: #fff;
+  background-color: var(--card-bg);
+  color: var(--text-main);
   cursor: pointer;
   width: 100%;
   max-width: 260px;
@@ -413,4 +452,35 @@ select,
   color: var(--warning-color);
   margin-bottom: 6px;
   font-weight: bold;
+}
+
+/* 高難易度オプションのチェックボックス用スタイル */
+.difficulty-options-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  background: rgba(128, 128, 128, 0.05);
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  margin-bottom: 20px;
+  width: 100%;
+  max-width: 260px;
+}
+.checkbox-label {
+  font-size: 13px;
+  color: var(--text-main);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+  width: 100%;
+  text-align: left;
+}
+.checkbox-label input {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
 }

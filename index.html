@@ -3,11 +3,20 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>make10 (イチゼロ) パズル</title>
+    <title>make10 (イチゼロ) パズル - 完全版</title>
     <link rel="stylesheet" href="style.css" />
   </head>
-  <body>
+  <body class="dark-theme">
     <div class="container">
+      <button
+        class="btn-theme-toggle"
+        onclick="toggleTheme()"
+        id="theme-toggle-btn"
+        title="テーマを切り替え"
+      >
+        🌙
+      </button>
+
       <div id="game-overlay" class="overlay">
         <h2 id="overlay-title">📢 MAKE10 PUZZLE</h2>
         <p id="overlay-msg">説明テキスト</p>
@@ -17,11 +26,11 @@
           class="overlay-select-box"
           onchange="handleBaseSelectChange()"
         >
-          <option value="10" selected>10進数 (目標: 10)</option>
+          <option value="10" selected>10進数 (標準)</option>
           <option value="16">16進数 (目標: 16 [10])</option>
           <option value="8">8進数 (目標: 8 [10])</option>
-          <option value="4">4進数 (目標: 4 [10] ※2桁拡張版)</option>
-          <option value="2">2進数 (目標: 2 [10] ※2桁拡張版)</option>
+          <option value="4">4進数 (目標: 4 [10] ※2桁版)</option>
+          <option value="2">2進数 (目標: 2 [10] ※2桁版)</option>
         </select>
 
         <div id="hex-time-container" class="extra-select-container">
@@ -37,11 +46,7 @@
           </select>
         </div>
 
-        <div
-          id="hint-select-container"
-          class="extra-select-container"
-          style="margin-bottom: 25px"
-        >
+        <div id="hint-select-container" class="extra-select-container">
           <div class="select-label">💡 10進数ヒント表示：</div>
           <select
             id="overlay-hint-select"
@@ -53,6 +58,27 @@
             </option>
             <option value="off">なし (上級・文字のみ硬派モード)</option>
           </select>
+        </div>
+
+        <div class="difficulty-options-container">
+          <div class="select-label" style="color: var(--danger-color)">
+            🔥 特殊高難易度オプション：
+          </div>
+
+          <label class="checkbox-label" id="label-opt-fraction">
+            <input type="checkbox" id="opt-fraction" /> 案A: 分数・小数解禁
+            (別枠超難問)
+          </label>
+
+          <label class="checkbox-label" id="label-opt-target">
+            <input type="checkbox" id="opt-target" /> 案B: ターゲット変動 (make
+            X)
+          </label>
+
+          <label class="checkbox-label">
+            <input type="checkbox" id="opt-blind" /> 案C: ブラインド
+            (カード1枚伏せ)
+          </label>
         </div>
 
         <div class="overlay-button-container">
@@ -124,7 +150,7 @@
           <button class="btn-ctrl btn-op" onclick="pressOp(')')">)</button>
           <button
             class="btn-ctrl btn-op"
-            style="grid-column: span 2; font-size: 13px; color: #8888aa"
+            style="grid-column: span 2; font-size: 13px; color: var(--text-sub)"
             onclick="popFormula()"
           >
             末尾1文字消す
