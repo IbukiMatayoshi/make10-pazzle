@@ -74,9 +74,21 @@
             class="difficulty-options-container"
             id="difficulty-options-panel"
           >
-            <div class="select-label" style="color: var(--danger-color)">
-              🔥 特殊ルール (いずれか1つ)：
+            <div
+              class="select-label"
+              style="
+                color: var(--danger-color);
+                text-align: center;
+                width: 100%;
+              "
+            >
+              🔥 特殊ルール：
             </div>
+
+            <label class="checkbox-label">
+              <input type="radio" name="special-mode" id="opt-none" checked />
+              なし (標準ルール)
+            </label>
 
             <label class="checkbox-label" id="label-opt-fraction">
               <input type="radio" name="special-mode" id="opt-fraction" />

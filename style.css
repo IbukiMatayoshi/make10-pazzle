@@ -368,6 +368,7 @@ select,
   flex: 1;
 }
 
+/* 【修正】メニュー画面全体を完璧に中央揃えにする設定 */
 .overlay {
   display: none;
   position: absolute;
@@ -396,12 +397,22 @@ select,
   line-height: 1.5;
 }
 
+/* メニュー内コンテンツを中央に固定 */
+#overlay-content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
 .overlay-button-container {
   display: flex;
   flex-direction: column;
   gap: 12px;
   width: 100%;
   max-width: 260px;
+  margin-top: 10px;
 }
 
 .btn-trigger {
@@ -437,6 +448,7 @@ select,
   cursor: pointer;
   width: 100%;
   max-width: 260px;
+  text-align-last: center; /* 文字を中央寄せ */
 }
 
 .extra-select-container {
@@ -453,29 +465,31 @@ select,
   font-weight: bold;
 }
 
-/* トグルボタンの装飾 */
 .btn-toggle-options {
   background-color: transparent;
   border: 1px dashed var(--primary-color);
   color: var(--primary-color);
-  padding: 6px 16px;
+  padding: 8px 16px;
   border-radius: 8px;
   font-size: 13px;
   font-weight: bold;
   cursor: pointer;
   margin-bottom: 15px;
+  width: 100%;
+  max-width: 260px;
 }
 .btn-toggle-options:hover {
   background-color: rgba(74, 144, 226, 0.05);
 }
 
+/* 【修正】オプション枠とその中身を中央配置に固定 */
 .difficulty-options-container {
-  display: none; /* 初期は非表示 */
+  display: none;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
+  align-items: center; /* 枠内の要素も中央揃え */
+  gap: 10px;
   background: rgba(128, 128, 128, 0.05);
-  padding: 12px;
+  padding: 15px;
   border-radius: 10px;
   border: 1px solid var(--border-color);
   margin-bottom: 20px;
@@ -488,18 +502,20 @@ select,
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: flex-start; /* チェックボックスと文字自体は左詰めで並べる */
+  gap: 10px;
   user-select: none;
   width: 100%;
-  text-align: left;
+  max-width: 200px; /* 少し縮めて文字が中央あたりに綺麗に並ぶように調整 */
 }
 .checkbox-label input {
   cursor: pointer;
   width: 16px;
   height: 16px;
+  margin: 0;
 }
 
-/* カウントダウン表示のスタイル */
+/* カウントダウン表示をコンテナの真ん中に固定 */
 .countdown-display {
   display: none;
   font-size: 90px;
@@ -507,23 +523,27 @@ select,
   color: var(--warning-color);
   text-shadow: 0 0 20px rgba(255, 159, 28, 0.5);
   animation: zoomInOut 1s ease infinite;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 @keyframes zoomInOut {
   0% {
-    transform: scale(0.6);
+    transform: translate(-50%, -50%) scale(0.6);
     opacity: 0;
   }
   30% {
-    transform: scale(1.1);
+    transform: translate(-50%, -50%) scale(1.1);
     opacity: 1;
   }
   80% {
-    transform: scale(1);
+    transform: translate(-50%, -50%) scale(1);
     opacity: 1;
   }
   100% {
-    transform: scale(1.4);
+    transform: translate(-50%, -50%) scale(1.4);
     opacity: 0;
   }
 }

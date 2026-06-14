@@ -8,6 +8,7 @@ let score = 0;
 let maxRoundTime = 60;
 let timeLeft = 60;
 let timerInterval = null;
+let cdInterval = null; // 【追加】カウントダウン用タイマー変数
 let gameState = "SETUP";
 let currentAnswerFormula = "";
 let isHintEnabled = true;
@@ -35,7 +36,6 @@ function toggleTheme() {
   }
 }
 
-// 【新機能】高度な設定パネルの出し入れ切り替え
 function toggleOptionsVisibility() {
   const panel = document.getElementById("difficulty-options-panel");
   const btn = document.querySelector(".btn-toggle-options");
@@ -50,11 +50,12 @@ function toggleOptionsVisibility() {
 
 function showHomeMenu() {
   gameState = "SETUP";
+  // 【修正】メインタイマーとカウントダウンタイマーを「確実に両方とも破棄」してフリーズを防ぐ
   if (timerInterval) clearInterval(timerInterval);
+  if (cdInterval) clearInterval(cdInterval);
 
-  // カウントダウン画面を隠し、メニューコンテンツを再表示
   document.getElementById("countdown-screen").style.display = "none";
-  document.getElementById("overlay-content").style.display = "block";
+  document.getElementById("overlay-content").style.display = "flex"; // 【修正】flexで中央揃えに固定
 
   score = 0;
   document.getElementById("score-val").innerText = score;
@@ -79,7 +80,6 @@ function showHomeMenu() {
   document.getElementById("overlay-btn-main").innerText = "ゲームスタート";
   document.getElementById("overlay-btn-sub").style.display = "none";
 
-  // パネルのトグルを閉じて初期化
   document.getElementById("difficulty-options-panel").style.display = "none";
   document.querySelector(".btn-toggle-options").innerText =
     "🛠️ 高度な設定を表示";
@@ -95,8 +95,13 @@ function handleBaseSelectChange() {
 
   const optTarget = document.getElementById("opt-target");
   const labelTarget = document.getElementById("label-opt-target");
+  const optNone = document.getElementById("opt-none");
+
   if (base === 2) {
-    optTarget.checked = false;
+    // 2進数のときはターゲット変動が選ばれていたら「なし」に戻して無効化
+    if (optTarget.checked) {
+      optNone.checked = true;
+    }
     optTarget.disabled = true;
     labelTarget.style.opacity = "0.4";
   } else {
@@ -160,23 +165,24 @@ function initGameRound() {
   renderReferenceTable();
   preGenerateProblem();
 
-  // 【新機能】ここからカウントダウン演出を呼び出す
   runStartCountdown();
 }
 
-// 【新機能】スタートカウントダウンシステム
 function runStartCountdown() {
-  gameState = "TRANSITION"; // カウントダウン中は操作をロック
+  gameState = "TRANSITION";
+  if (cdInterval) clearInterval(cdInterval); // 重複防止で事前にクリア
+
   const menuContent = document.getElementById("overlay-content");
   const countdownScreen = document.getElementById("countdown-screen");
 
-  menuContent.style.display = "none"; // メニューを隠す
-  countdownScreen.style.display = "block"; // カウントダウンテキストを出す
+  menuContent.style.display = "none";
+  countdownScreen.style.display = "block";
 
   let count = 3;
   countdownScreen.innerText = count;
+  countdownScreen.style.color = "var(--warning-color)"; // 色の初期化
 
-  let cdInterval = setInterval(() => {
+  cdInterval = setInterval(() => {
     count--;
     if (count === 3) {
       countdownScreen.innerText = "3";
@@ -184,14 +190,13 @@ function runStartCountdown() {
       countdownScreen.innerText = "2";
     } else if (count === 1) {
       countdownScreen.innerText = "1";
-      countdownScreen.style.color = "var(--danger-color)"; // 1は赤っぽく
+      countdownScreen.style.color = "var(--danger-color)";
     } else if (count === 0) {
       countdownScreen.innerText = "GO!!";
-      countdownScreen.style.color = "var(--success-color)"; // GOは緑っぽく
+      countdownScreen.style.color = "var(--success-color)";
     } else {
       clearInterval(cdInterval);
-      countdownScreen.style.color = "var(--warning-color)"; // 色を元に戻す
-      startGameRound(); // カウントダウン終了でゲーム開始
+      startGameRound();
     }
   }, 1000);
 }
@@ -624,8 +629,11 @@ function renderDummyCards() {
 
 function showGameClearFinal() {
   gameState = "CLEAR";
+  if (timerInterval) clearInterval(timerInterval);
+  if (cdInterval) clearInterval(cdInterval); // バグ防止でクリア画面でもタイマーを完全リセット
+
   document.getElementById("countdown-screen").style.display = "none";
-  document.getElementById("overlay-content").style.display = "block";
+  document.getElementById("overlay-content").style.display = "flex";
 
   document.getElementById("overlay-title").innerHTML = "🎉 GAME CLEAR!";
   document.getElementById("overlay-msg").innerHTML =
@@ -634,7 +642,6 @@ function showGameClearFinal() {
   document.getElementById("overlay-btn-main").innerText = "もう一度遊ぶ";
   document.getElementById("overlay-btn-sub").style.display = "none";
 
-  // パネルとボタンの初期化
   document.getElementById("difficulty-options-panel").style.display = "none";
   document.querySelector(".btn-toggle-options").style.display = "inline-block";
   document.querySelector(".btn-toggle-options").innerText =
