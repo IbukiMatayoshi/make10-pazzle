@@ -8,7 +8,6 @@ let score = 0;
 let maxRoundTime = 60;
 let timeLeft = 60;
 let timerInterval = null;
-let cdInterval = null; // 【追加】カウントダウン用タイマー変数
 let gameState = "SETUP";
 let currentAnswerFormula = "";
 let isHintEnabled = true;
@@ -50,12 +49,10 @@ function toggleOptionsVisibility() {
 
 function showHomeMenu() {
   gameState = "SETUP";
-  // 【修正】メインタイマーとカウントダウンタイマーを「確実に両方とも破棄」してフリーズを防ぐ
+  // メメインタイマーの完全クリアのみ（カウントダウン処理は抹消）
   if (timerInterval) clearInterval(timerInterval);
-  if (cdInterval) clearInterval(cdInterval);
 
-  document.getElementById("countdown-screen").style.display = "none";
-  document.getElementById("overlay-content").style.display = "flex"; // 【修正】flexで中央揃えに固定
+  document.getElementById("overlay-content").style.display = "flex";
 
   score = 0;
   document.getElementById("score-val").innerText = score;
@@ -98,7 +95,6 @@ function handleBaseSelectChange() {
   const optNone = document.getElementById("opt-none");
 
   if (base === 2) {
-    // 2進数のときはターゲット変動が選ばれていたら「なし」に戻して無効化
     if (optTarget.checked) {
       optNone.checked = true;
     }
@@ -165,40 +161,8 @@ function initGameRound() {
   renderReferenceTable();
   preGenerateProblem();
 
-  runStartCountdown();
-}
-
-function runStartCountdown() {
-  gameState = "TRANSITION";
-  if (cdInterval) clearInterval(cdInterval); // 重複防止で事前にクリア
-
-  const menuContent = document.getElementById("overlay-content");
-  const countdownScreen = document.getElementById("countdown-screen");
-
-  menuContent.style.display = "none";
-  countdownScreen.style.display = "block";
-
-  let count = 3;
-  countdownScreen.innerText = count;
-  countdownScreen.style.color = "var(--warning-color)"; // 色の初期化
-
-  cdInterval = setInterval(() => {
-    count--;
-    if (count === 3) {
-      countdownScreen.innerText = "3";
-    } else if (count === 2) {
-      countdownScreen.innerText = "2";
-    } else if (count === 1) {
-      countdownScreen.innerText = "1";
-      countdownScreen.style.color = "var(--danger-color)";
-    } else if (count === 0) {
-      countdownScreen.innerText = "GO!!";
-      countdownScreen.style.color = "var(--success-color)";
-    } else {
-      clearInterval(cdInterval);
-      startGameRound();
-    }
-  }, 1000);
+  // 【修正】カウントダウンを挟まず、その場で即ゲーム画面へ移行
+  startGameRound();
 }
 
 function updateTargetDisplayString() {
@@ -630,9 +594,7 @@ function renderDummyCards() {
 function showGameClearFinal() {
   gameState = "CLEAR";
   if (timerInterval) clearInterval(timerInterval);
-  if (cdInterval) clearInterval(cdInterval); // バグ防止でクリア画面でもタイマーを完全リセット
 
-  document.getElementById("countdown-screen").style.display = "none";
   document.getElementById("overlay-content").style.display = "flex";
 
   document.getElementById("overlay-title").innerHTML = "🎉 GAME CLEAR!";
@@ -676,4 +638,22 @@ function renderReferenceTable() {
   } else {
     refTable.innerHTML = `<div class="ref-item">馴染み深い 10進数モード</div>`;
   }
+}
+
+function permute(arr) {
+  let res = [];
+  const dfs = (curr, remaining) => {
+    if (remaining.length === 0) {
+      res.push(curr);
+      return;
+    }
+    for (let i = 0; i < remaining.length; i++) {
+      dfs(
+        [...curr, remaining[i]],
+        remaining.filter((_, idx) => idx !== i),
+      );
+    }
+  };
+  dfs([], arr);
+  return res;
 }
