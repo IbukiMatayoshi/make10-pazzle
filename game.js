@@ -49,7 +49,6 @@ function toggleOptionsVisibility() {
 
 function showHomeMenu() {
   gameState = "SETUP";
-  // メメインタイマーの完全クリアのみ（カウントダウン処理は抹消）
   if (timerInterval) clearInterval(timerInterval);
 
   document.getElementById("overlay-content").style.display = "flex";
@@ -161,7 +160,6 @@ function initGameRound() {
   renderReferenceTable();
   preGenerateProblem();
 
-  // 【修正】カウントダウンを挟まず、その場で即ゲーム画面へ移行
   startGameRound();
 }
 
@@ -302,6 +300,26 @@ function updateFormulaDisplay() {
     formulaBox.innerText = "数式を作ってください";
     formulaBox.style.color = "#555";
     resultBox.innerText = "計算結果: -";
+    return;
+  }
+
+  // 【新仕様】ブラインドモード中、数字カードが1枚しか置かれていないときは計算をガードする
+  if (modeBlind && usedCardIndices.length < 2) {
+    let displayText = "";
+    currentFormula.forEach((item) => {
+      let displayChar =
+        item.text === "*" ? "×" : item.text === "/" ? "÷" : item.text;
+      displayText += displayChar + " ";
+    });
+    if (blindCardIndex !== -1) {
+      let blindText = toCustomBaseString(problemNumbers[blindCardIndex]);
+      let regex = new RegExp(blindText, "g");
+      formulaBox.innerText = displayText.replace(regex, "？");
+    } else {
+      formulaBox.innerText = displayText;
+    }
+    resultBox.innerText =
+      "計算結果: ？？ (カードを2枚以上組み合わせてください)";
     return;
   }
 
