@@ -59,7 +59,6 @@ body {
   position: relative;
 }
 
-/* テーマ切り替えボタン */
 .btn-theme-toggle {
   position: absolute;
   top: 15px;
@@ -454,9 +453,24 @@ select,
   font-weight: bold;
 }
 
-/* 高難易度オプションのチェックボックス用スタイル */
+/* トグルボタンの装飾 */
+.btn-toggle-options {
+  background-color: transparent;
+  border: 1px dashed var(--primary-color);
+  color: var(--primary-color);
+  padding: 6px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-bottom: 15px;
+}
+.btn-toggle-options:hover {
+  background-color: rgba(74, 144, 226, 0.05);
+}
+
 .difficulty-options-container {
-  display: flex;
+  display: none; /* 初期は非表示 */
   flex-direction: column;
   align-items: flex-start;
   gap: 8px;
@@ -483,4 +497,33 @@ select,
   cursor: pointer;
   width: 16px;
   height: 16px;
+}
+
+/* カウントダウン表示のスタイル */
+.countdown-display {
+  display: none;
+  font-size: 90px;
+  font-weight: bold;
+  color: var(--warning-color);
+  text-shadow: 0 0 20px rgba(255, 159, 28, 0.5);
+  animation: zoomInOut 1s ease infinite;
+}
+
+@keyframes zoomInOut {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  30% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  80% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
 }

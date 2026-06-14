@@ -18,84 +18,98 @@
       </button>
 
       <div id="game-overlay" class="overlay">
-        <h2 id="overlay-title">📢 MAKE10 PUZZLE</h2>
-        <p id="overlay-msg">説明テキスト</p>
+        <div id="countdown-screen" class="countdown-display">3</div>
 
-        <select
-          id="overlay-base-select"
-          class="overlay-select-box"
-          onchange="handleBaseSelectChange()"
-        >
-          <option value="10" selected>10進数 (標準)</option>
-          <option value="16">16進数 (目標: 16 [10])</option>
-          <option value="8">8進数 (目標: 8 [10])</option>
-          <option value="4">4進数 (目標: 4 [10] ※2桁版)</option>
-          <option value="2">2進数 (目標: 2 [10] ※2桁版)</option>
-        </select>
+        <div id="overlay-content">
+          <h2 id="overlay-title">📢 MAKE10 PUZZLE</h2>
+          <p id="overlay-msg">説明テキスト</p>
 
-        <div id="hex-time-container" class="extra-select-container">
-          <div class="select-label">⏳ 制限時間を選択：</div>
           <select
-            id="overlay-time-select"
+            id="overlay-base-select"
             class="overlay-select-box"
-            style="margin-bottom: 0; border-color: var(--warning-color)"
+            onchange="handleBaseSelectChange()"
           >
-            <option value="60" selected>1分 (標準)</option>
-            <option value="120">2分 (じっくり)</option>
-            <option value="180">3分 (たっぷり)</option>
+            <option value="10" selected>10進数</option>
+            <option value="16">16進数 (目標: 16 [10])</option>
+            <option value="8">8進数 (目標: 8 [10])</option>
+            <option value="4">4進数 (目標: 4 [10])</option>
+            <option value="2">2進数 (目標: 2 [10])</option>
           </select>
-        </div>
 
-        <div id="hint-select-container" class="extra-select-container">
-          <div class="select-label">💡 10進数ヒント表示：</div>
-          <select
-            id="overlay-hint-select"
-            class="overlay-select-box"
-            style="margin-bottom: 0; border-color: var(--success-color)"
-          >
-            <option value="on" selected>
-              あり (初級・カードの下に数字表示)
-            </option>
-            <option value="off">なし (上級・文字のみ硬派モード)</option>
-          </select>
-        </div>
-
-        <div class="difficulty-options-container">
-          <div class="select-label" style="color: var(--danger-color)">
-            🔥 特殊高難易度オプション：
+          <div id="hex-time-container" class="extra-select-container">
+            <div class="select-label">⏳ 制限時間を選択：</div>
+            <select
+              id="overlay-time-select"
+              class="overlay-select-box"
+              style="margin-bottom: 0; border-color: var(--warning-color)"
+            >
+              <option value="60" selected>1分 (標準)</option>
+              <option value="120">2分 (じっくり)</option>
+              <option value="180">3分 (たっぷり)</option>
+            </select>
           </div>
 
-          <label class="checkbox-label" id="label-opt-fraction">
-            <input type="checkbox" id="opt-fraction" /> 案A: 分数・小数解禁
-            (別枠超難問)
-          </label>
+          <div id="hint-select-container" class="extra-select-container">
+            <div class="select-label">💡 10進数ヒント表示：</div>
+            <select
+              id="overlay-hint-select"
+              class="overlay-select-box"
+              style="margin-bottom: 0; border-color: var(--success-color)"
+            >
+              <option value="on" selected>
+                あり (初級・カードの下に数字表示)
+              </option>
+              <option value="off">なし (上級・文字のみ硬派モード)</option>
+            </select>
+          </div>
 
-          <label class="checkbox-label" id="label-opt-target">
-            <input type="checkbox" id="opt-target" /> 案B: ターゲット変動 (make
-            X)
-          </label>
-
-          <label class="checkbox-label">
-            <input type="checkbox" id="opt-blind" /> 案C: ブラインド
-            (カード1枚伏せ)
-          </label>
-        </div>
-
-        <div class="overlay-button-container">
           <button
-            id="overlay-btn-main"
-            class="btn-trigger btn-main-trigger"
-            onclick="overlayMainAction()"
+            class="btn-toggle-options"
+            onclick="toggleOptionsVisibility()"
           >
-            ボタン1
+            🛠️ 高度な設定を表示
           </button>
-          <button
-            id="overlay-btn-sub"
-            class="btn-trigger btn-sub-trigger"
-            onclick="overlaySubAction()"
+
+          <div
+            class="difficulty-options-container"
+            id="difficulty-options-panel"
           >
-            ボタン2
-          </button>
+            <div class="select-label" style="color: var(--danger-color)">
+              🔥 特殊ルール (いずれか1つ)：
+            </div>
+
+            <label class="checkbox-label" id="label-opt-fraction">
+              <input type="radio" name="special-mode" id="opt-fraction" />
+              分数・小数解禁 (超難問)
+            </label>
+
+            <label class="checkbox-label" id="label-opt-target">
+              <input type="radio" name="special-mode" id="opt-target" />
+              ターゲット変動 (make X)
+            </label>
+
+            <label class="checkbox-label">
+              <input type="radio" name="special-mode" id="opt-blind" />
+              ブラインド (カード1枚伏せ)
+            </label>
+          </div>
+
+          <div class="overlay-button-container">
+            <button
+              id="overlay-btn-main"
+              class="btn-trigger btn-main-trigger"
+              onclick="overlayMainAction()"
+            >
+              ボタン1
+            </button>
+            <button
+              id="overlay-btn-sub"
+              class="btn-trigger btn-sub-trigger"
+              onclick="overlaySubAction()"
+            >
+              ボタン2
+            </button>
+          </div>
         </div>
       </div>
 
