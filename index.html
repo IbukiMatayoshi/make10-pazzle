@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>make10 (イチゼロ) パズル</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div id="game-overlay" class="overlay">
+        <h2 id="overlay-title">📢 MAKE10 PUZZLE</h2>
+        <p id="overlay-msg">説明テキスト</p>
+
+        <select
+          id="overlay-base-select"
+          class="overlay-select-box"
+          onchange="handleBaseSelectChange()"
+        >
+          <option value="10" selected>10進数 (目標: 10)</option>
+          <option value="16">16進数 (目標: 16 [10])</option>
+          <option value="8">8進数 (目標: 8 [10])</option>
+          <option value="4">4進数 (目標: 4 [10] ※2桁拡張版)</option>
+          <option value="2">2進数 (目標: 2 [10] ※2桁拡張版)</option>
+        </select>
+
+        <div id="hex-time-container" class="extra-select-container">
+          <div class="select-label">⏳ 制限時間を選択：</div>
+          <select
+            id="overlay-time-select"
+            class="overlay-select-box"
+            style="margin-bottom: 0; border-color: var(--warning-color)"
+          >
+            <option value="60" selected>1分 (標準)</option>
+            <option value="120">2分 (じっくり)</option>
+            <option value="180">3分 (たっぷり)</option>
+          </select>
+        </div>
+
+        <div
+          id="hint-select-container"
+          class="extra-select-container"
+          style="margin-bottom: 25px"
+        >
+          <div class="select-label">💡 10進数ヒント表示：</div>
+          <select
+            id="overlay-hint-select"
+            class="overlay-select-box"
+            style="margin-bottom: 0; border-color: var(--success-color)"
+          >
+            <option value="on" selected>
+              あり (初級・カードの下に数字表示)
+            </option>
+            <option value="off">なし (上級・文字のみ硬派モード)</option>
+          </select>
+        </div>
+
+        <div class="overlay-button-container">
+          <button
+            id="overlay-btn-main"
+            class="btn-trigger btn-main-trigger"
+            onclick="overlayMainAction()"
+          >
+            ボタン1
+          </button>
+          <button
+            id="overlay-btn-sub"
+            class="btn-trigger btn-sub-trigger"
+            onclick="overlaySubAction()"
+          >
+            ボタン2
+          </button>
+        </div>
+      </div>
+
+      <h1>make10 (イチゼロ) パズル</h1>
+
+      <div class="status-container">
+        <div class="score-box">
+          SCORE: <span id="score-val" class="score-val">0</span> / 10
+        </div>
+        <div class="timer-box">
+          <button class="btn-pause" id="pause-btn" onclick="togglePause()">
+            一時停止
+          </button>
+          TIME: <span id="timer-val" class="timer-val">60</span>s
+        </div>
+      </div>
+      <div class="gauge-container">
+        <div id="gauge-bar" class="gauge-bar"></div>
+      </div>
+
+      <div class="settings">
+        <select id="game-base-select" disabled style="opacity: 0.7">
+          <option value="10">10進数</option>
+          <option value="16">16進数</option>
+          <option value="8">8進数</option>
+          <option value="4">4進数</option>
+          <option value="2">2進数</option>
+        </select>
+        <button
+          id="giveup-btn"
+          class="btn-ctrl-top btn-giveup"
+          onclick="giveUpAndShowAnswer()"
+        >
+          ギブアップ (答えを見る)
+        </button>
+      </div>
+
+      <div class="reference-table" id="reference-table"></div>
+      <div class="target-info" id="target-info">--進数目標</div>
+      <div class="card-container" id="card-container"></div>
+
+      <div class="formula-box" id="formula-box">数式を作ってください</div>
+      <div class="result-box" id="result-box">計算結果: -</div>
+
+      <div class="keyboard-layout">
+        <div class="grid-inputs">
+          <button class="btn-ctrl btn-op" onclick="pressOp('+')">+</button>
+          <button class="btn-ctrl btn-op" onclick="pressOp('-')">−</button>
+          <button class="btn-ctrl btn-op" onclick="pressOp('*')">×</button>
+          <button class="btn-ctrl btn-op" onclick="pressOp('/')">÷</button>
+          <button class="btn-ctrl btn-op" onclick="pressOp('(')">(</button>
+          <button class="btn-ctrl btn-op" onclick="pressOp(')')">)</button>
+          <button
+            class="btn-ctrl btn-op"
+            style="grid-column: span 2; font-size: 13px; color: #8888aa"
+            onclick="popFormula()"
+          >
+            末尾1文字消す
+          </button>
+        </div>
+        <div class="grid-actions">
+          <button class="btn-ctrl btn-back" onclick="popFormula()">
+            ⌫<br /><span style="font-size: 9px">戻る</span>
+          </button>
+          <button class="btn-ctrl btn-clear" onclick="clearFormula()">
+            Clear<br /><span style="font-size: 9px">全消去</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="game.js"></script>
+  </body>
+</html>
