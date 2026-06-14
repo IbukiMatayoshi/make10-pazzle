@@ -76,9 +76,13 @@ function showHomeMenu() {
   document.getElementById("overlay-btn-main").innerText = "ゲームスタート";
   document.getElementById("overlay-btn-sub").style.display = "none";
 
+  // ★【バグ修正】ホームに戻った際、高度な設定ボタン（トグル）が消えないように強制再表示
+  const toggleBtn = document.querySelector(".btn-toggle-options");
+  if (toggleBtn) {
+    toggleBtn.style.display = "inline-block";
+    toggleBtn.innerText = "🛠️ 高度な設定を表示";
+  }
   document.getElementById("difficulty-options-panel").style.display = "none";
-  document.querySelector(".btn-toggle-options").innerText =
-    "🛠️ 高度な設定を表示";
 
   handleBaseSelectChange();
   document.getElementById("game-overlay").style.display = "flex";
@@ -303,7 +307,6 @@ function updateFormulaDisplay() {
     return;
   }
 
-  // 【新仕様】ブラインドモード中、数字カードが1枚しか置かれていないときは計算をガードする
   if (modeBlind && usedCardIndices.length < 2) {
     let displayText = "";
     currentFormula.forEach((item) => {
@@ -456,9 +459,14 @@ function toCustomBaseString(num) {
   return num.toString(currentBase).toUpperCase();
 }
 
-function solveStrictly(nums, target) {
+// 探索エンジン
+function solveStrictly(nums, target, strictFractionCheck = false) {
   let permutations = permute(nums);
   let ops = ["+", "-", "*", "/"];
+  let hasIntegerSolution = false;
+  let hasFractionSolution = false;
+  let fractionAnswerPattern = "";
+
   for (let p of permutations) {
     let formulas = [
       `((A)O1(B))O2((C)O3(D))`,
@@ -471,12 +479,14 @@ function solveStrictly(nums, target) {
       for (let o2 of ops) {
         for (let o3 of ops) {
           for (let fPattern of formulas) {
-            if (!modeFraction) {
-              if (
-                !checkIntegerOnly(p[0], p[1], o1) ||
-                !checkIntegerOnly(p[2], p[3], o3)
-              )
-                continue;
+            // 1. まず整数だけで解けるかチェック
+            let isIntRoute = true;
+            if (
+              !checkIntegerOnly(p[0], p[1], o1) ||
+              !checkIntegerOnly(p[2], p[3], o3)
+            )
+              isIntRoute = false;
+            if (isIntRoute) {
               let step1 = eval(`${p[0]}${o1}${p[1]}`);
               let step2 = eval(`${p[2]}${o3}${p[3]}`);
               if (
@@ -484,7 +494,7 @@ function solveStrictly(nums, target) {
                 !Number.isInteger(step2) ||
                 !checkIntegerOnly(step1, step2, o2)
               )
-                continue;
+                isIntRoute = false;
             }
 
             try {
@@ -500,8 +510,17 @@ function solveStrictly(nums, target) {
 
               if (res !== undefined && isFinite(res) && !isNaN(res)) {
                 if (Math.abs(res - target) < 0.00001) {
-                  storeAnswerFormula(fPattern, p, o1, o2, o3);
-                  return true;
+                  if (isIntRoute) {
+                    hasIntegerSolution = true;
+                    if (!strictFractionCheck) {
+                      storeAnswerFormula(fPattern, p, o1, o2, o3);
+                      return true; // 通常モードなら即座に決定
+                    }
+                  } else {
+                    hasFractionSolution = true;
+                    // 分数解のパターンを一時保存
+                    fractionAnswerPattern = { fPattern, p, o1, o2, o3 };
+                  }
                 }
               }
             } catch (e) {}
@@ -510,6 +529,19 @@ function solveStrictly(nums, target) {
       }
     }
   }
+
+  // ★【新仕様】分数高難易度化：整数解がなく、分数解「だけ」が存在する問題を厳選
+  if (strictFractionCheck && hasFractionSolution && !hasIntegerSolution) {
+    storeAnswerFormula(
+      fractionAnswerPattern.fPattern,
+      fractionAnswerPattern.p,
+      fractionAnswerPattern.o1,
+      fractionAnswerPattern.o2,
+      fractionAnswerPattern.o3,
+    );
+    return true;
+  }
+
   return false;
 }
 
@@ -533,7 +565,7 @@ function storeAnswerFormula(pattern, p, o1, o2, o3) {
 }
 
 function preGenerateProblem() {
-  let maxAttempts = 1000;
+  let maxAttempts = 2000; // 厳選のためにガチャの最大回数を拡張
   let nums = [];
 
   blindCardIndex = modeBlind ? Math.floor(Math.random() * 4) : -1;
@@ -549,13 +581,30 @@ function preGenerateProblem() {
         nums.push(val);
       }
     }
-    if (solveStrictly(nums, targetValue)) {
-      problemNumbers = nums;
-      return;
+
+    // 分数解禁モードがONの場合、まずは「分数でしか解けない超難問」の厳選フィルターを通す
+    if (modeFraction) {
+      if (solveStrictly(nums, targetValue, true)) {
+        problemNumbers = nums;
+        return;
+      }
+    } else {
+      // 通常時は整数で解ける問題を普通に引く
+      if (solveStrictly(nums, targetValue, false)) {
+        problemNumbers = nums;
+        return;
+      }
     }
   }
-  problemNumbers = currentBase === 2 ? [1, 1, 0, 0] : [1, 1, 1, 2];
-  solveStrictly(problemNumbers, targetValue);
+
+  // 万が一、制限回数内に超難問を引けなかった場合のフォールバック（分数必須の有名問題：3,3,8,8など）
+  if (modeFraction) {
+    problemNumbers = [3, 3, 8, 8];
+    solveStrictly(problemNumbers, targetValue, false);
+  } else {
+    problemNumbers = currentBase === 2 ? [1, 1, 0, 0] : [1, 1, 1, 2];
+    solveStrictly(problemNumbers, targetValue, false);
+  }
 }
 
 function renderCards() {
@@ -622,10 +671,13 @@ function showGameClearFinal() {
   document.getElementById("overlay-btn-main").innerText = "もう一度遊ぶ";
   document.getElementById("overlay-btn-sub").style.display = "none";
 
+  // ゲームクリア画面でも高度な設定ボタンを復帰させる
+  const toggleBtn = document.querySelector(".btn-toggle-options");
+  if (toggleBtn) {
+    toggleBtn.style.display = "inline-block";
+    toggleBtn.innerText = "🛠️ 高度な設定を表示";
+  }
   document.getElementById("difficulty-options-panel").style.display = "none";
-  document.querySelector(".btn-toggle-options").style.display = "inline-block";
-  document.querySelector(".btn-toggle-options").innerText =
-    "🛠️ 高度な設定を表示";
 
   handleBaseSelectChange();
   document.getElementById("game-overlay").style.display = "flex";
