@@ -62,12 +62,12 @@ function handleModeSelectChange() {
   const optNone = document.getElementById("opt-none");
 
   if (mode === "mix") {
-    baseSection.style.display = "none";
+    if (baseSection) baseSection.style.display = "none";
     if (optTarget.checked) optNone.checked = true;
     optTarget.disabled = true;
     targetLabel.style.opacity = "0.3";
   } else {
-    baseSection.style.display = "block";
+    if (baseSection) baseSection.style.display = "block";
     optTarget.disabled = false;
     targetLabel.style.opacity = "1";
     handleBaseSelectChange();
@@ -80,7 +80,8 @@ function handleBaseSelectChange() {
 
   const base = parseInt(document.getElementById("overlay-base-select").value);
   const timeContainer = document.getElementById("hex-time-container");
-  const hintContainer = document.getElementById("hint-select-container");
+  const hintSection = document.getElementById("menu-section-hint");
+
   const optTarget = document.getElementById("opt-target");
   const labelTarget = document.getElementById("label-opt-target");
   const optNone = document.getElementById("opt-none");
@@ -95,14 +96,14 @@ function handleBaseSelectChange() {
   }
 
   if (base === 16) {
-    timeContainer.style.display = "flex";
-    hintContainer.style.display = "flex";
+    if (timeContainer) timeContainer.style.display = "flex";
+    if (hintSection) hintSection.style.display = "block";
   } else if (base === 4 || base === 2) {
-    timeContainer.style.display = "none";
-    hintContainer.style.display = "flex";
+    if (timeContainer) timeContainer.style.display = "none";
+    if (hintSection) hintSection.style.display = "block";
   } else {
-    timeContainer.style.display = "none";
-    hintContainer.style.display = "none";
+    if (timeContainer) timeContainer.style.display = "none";
+    if (hintSection) hintSection.style.display = "none";
   }
 }
 
@@ -130,14 +131,18 @@ function showHomeMenu() {
   pastProblemsHistory = [];
   renderDummyCards();
 
-  document.getElementById("overlay-title").innerHTML = "📢 MAKE10 PUZZLE";
-  document.getElementById("overlay-msg").innerHTML =
-    "条件を選んで、ゲームスタートボタンを押してください。";
+  const modeSelect = document.getElementById("overlay-mode-select");
+  const btnMain = document.getElementById("overlay-btn-main");
+  const btnSub = document.getElementById("overlay-btn-sub");
+  const baseSection = document.getElementById("menu-section-base");
 
-  document.getElementById("overlay-mode-select").style.display = "block";
-  document.getElementById("overlay-btn-main").style.display = "block";
-  document.getElementById("overlay-btn-main").innerText = "ゲームスタート";
-  document.getElementById("overlay-btn-sub").style.display = "none";
+  if (modeSelect) modeSelect.style.display = "block";
+  if (btnMain) {
+    btnMain.style.display = "block";
+    btnMain.innerText = "ゲームスタート";
+  }
+  if (btnSub) btnSub.style.display = "none";
+  if (baseSection) baseSection.style.display = "block";
 
   const toggleBtn = document.querySelector(".btn-toggle-options");
   if (toggleBtn) {
@@ -197,7 +202,6 @@ function initGameRound() {
 
   document.getElementById("game-base-select").value = currentBase;
 
-  // ★タイムアタックモードの場合、初回のみ全体時間（180秒）をセット
   if (gameMode === "timeattack") {
     maxRoundTime = 180;
     timeLeft = 180;
@@ -205,12 +209,13 @@ function initGameRound() {
     timeLeft = maxRoundTime;
   }
 
-  // スコアボードの文字表記最適化
   const scoreBox = document.getElementById("game-score-box");
-  if (gameMode === "normal") {
-    scoreBox.innerHTML = `SCORE: <span id="score-val" class="score-val">${score}</span> / 10`;
-  } else {
-    scoreBox.innerHTML = `SOLVED: <span id="score-val" class="score-val">${score}</span> 問`;
+  if (scoreBox) {
+    if (gameMode === "normal") {
+      scoreBox.innerHTML = `SCORE: <span id="score-val" class="score-val">${score}</span> / 10`;
+    } else {
+      scoreBox.innerHTML = `SOLVED: <span id="score-val" class="score-val">${score}</span> 問`;
+    }
   }
 
   updateTargetDisplayString();
@@ -251,7 +256,6 @@ function startGameRound() {
   renderCards();
   clearFormulaInternal();
 
-  // タイムアタックかつ2問目以降はタイマーを再始動せずそのまま継続
   if (gameMode === "timeattack" && timerInterval !== null && timeLeft < 180) {
     document.getElementById("timer-val").innerText = timeLeft;
   } else {
@@ -260,12 +264,15 @@ function startGameRound() {
 }
 
 function overlayMainAction() {
-  if (gameState === "SETUP" || gameState === "CLEAR") {
-    showHomeMenu();
+  if (
+    gameState === "SETUP" ||
+    gameState === "CLEAR" ||
+    gameState === "GAMEOVER"
+  ) {
+    initGameRound();
   }
 }
 
-// サブボタン（ホーム画面に戻る）が押された時の処理
 function overlaySubAction() {
   if (
     gameState === "PAUSED" ||
@@ -287,10 +294,16 @@ function togglePause() {
     document.getElementById("overlay-msg").innerHTML =
       "ゲームを一時停止しています";
 
-    document.getElementById("menu-section-base").style.display = "none";
-    document.getElementById("hex-time-container").style.display = "none";
-    document.getElementById("hint-select-container").style.display = "none";
-    document.getElementById("overlay-mode-select").style.display = "none";
+    const baseSection = document.getElementById("menu-section-base");
+    const timeContainer = document.getElementById("hex-time-container");
+    const hintSection = document.getElementById("menu-section-hint");
+    const modeSelect = document.getElementById("overlay-mode-select");
+
+    if (baseSection) baseSection.style.display = "none";
+    if (timeContainer) timeContainer.style.display = "none";
+    if (hintSection) hintSection.style.display = "none";
+    if (modeSelect) modeSelect.style.display = "none";
+
     document.querySelector(".btn-toggle-options").style.display = "none";
     document.getElementById("difficulty-options-panel").style.display = "none";
 
@@ -329,8 +342,6 @@ function timerTick() {
 
 function timeUp() {
   gameState = "TRANSITION";
-
-  // ★サバイバルモードの時は1発アウトなので、即座にゲームオーバーへ移行
   if (gameMode === "survival") {
     showGameOverSurvival();
   } else if (gameMode === "timeattack") {
@@ -345,7 +356,6 @@ function giveUpAndShowAnswer() {
   gameState = "TRANSITION";
   clearInterval(timerInterval);
 
-  // サバイバルモードでのギブアップもゲームオーバー扱い
   if (gameMode === "survival") {
     showGameOverSurvival();
   } else {
@@ -372,23 +382,6 @@ function handleNextStageClick() {
   }
 }
 
-function showAnswerAndNextButton(titlePrefix) {
-  const resultBox = document.getElementById("result-box");
-  let cleanAns = currentAnswerFormula
-    .replace(/\*/g, " × ")
-    .replace(/\//g, " ÷ ");
-  let displayTargetStr =
-    gameMode === "mix" ? "10" : toCustomBaseString(targetValue);
-
-  resultBox.innerHTML = `
-        <div>
-            <span class="fail-text" style="font-weight:bold;">${titlePrefix} 答えの一例：</span>
-            <span style="color:#ff9f1c; font-size:18px; font-weight:bold; letter-spacing:1px;">${cleanAns} = ${displayTargetStr}</span>
-        </div>
-        <button class="btn-next-stage" onclick="handleNextStageClick()">次の問題へ ➔</button>
-    `;
-}
-
 // --- ⚙️ サバイバル / タイムアタック専用ゲームオーバー処理 ---
 function showGameOverSurvival() {
   gameState = "GAMEOVER";
@@ -400,7 +393,7 @@ function showGameOverSurvival() {
 }
 
 function showGameOverTimeAttack() {
-  gameState = "CLEAR"; // 終了後の挙動クリアと同じ
+  gameState = "GAMEOVER";
   document.getElementById("overlay-content").style.display = "flex";
   document.getElementById("overlay-title").innerHTML = "⏱️ TIME UP!";
   document.getElementById("overlay-msg").innerHTML =
@@ -410,12 +403,17 @@ function showGameOverTimeAttack() {
 
 function hideMenuElements() {
   document.getElementById("overlay-base-select").style.display = "none";
-  document.getElementById("hex-time-container").style.display = "none";
-  document.getElementById("hint-select-container").style.display = "none";
-  document.getElementById("menu-section-base").style.display = "none";
+  const timeContainer = document.getElementById("hex-time-container");
+  const hintSection = document.getElementById("menu-section-hint");
+  const baseSection = document.getElementById("menu-section-base");
+
+  if (timeContainer) timeContainer.style.display = "none";
+  if (hintSection) hintSection.style.display = "none";
+  if (baseSection) baseSection.style.display = "none";
   document.getElementById("overlay-mode-select").style.display = "none";
 
-  document.getElementById("overlay-btn-main").style.display = "none";
+  document.getElementById("overlay-btn-main").style.display = "block";
+  document.getElementById("overlay-btn-main").innerText = "もう一度遊ぶ";
   document.getElementById("overlay-btn-sub").style.display = "block";
   document.getElementById("overlay-btn-sub").innerText = "🏠 ホーム画面に戻る";
 
@@ -496,13 +494,13 @@ function updateFormulaDisplay() {
       if (allCardsUsed && Math.abs(res - targetValue) < 0.01) {
         gameState = "TRANSITION";
 
-        // タイムアタック以外の時はタイマーを一度止める
         if (gameMode !== "timeattack") {
           clearInterval(timerInterval);
         }
 
         score++;
-        document.getElementById("score-val").innerText = score;
+        const scoreValSpan = document.getElementById("score-val");
+        if (scoreValSpan) scoreValSpan.innerText = score;
 
         if (gameMode === "normal" && score >= 10) {
           resultBox.innerHTML = `
@@ -757,6 +755,15 @@ function fastSolve(
   return false;
 }
 
+// ★【バグ修正】消失していた重複ガードチェック関数を確実に再定義
+function isProblemRepeated(newNums) {
+  let sortedNew = [...newNums].sort((a, b) => a - b).join(",");
+  for (let past of pastProblemsHistory) {
+    if (past === sortedNew) return true;
+  }
+  return false;
+}
+
 // --- 🎲 クイズ問題オート生成モジュール ---
 function preGenerateProblem() {
   let maxAttempts = modeFraction ? 5000 : 2000;
@@ -881,7 +888,7 @@ function renderCards() {
     }
 
     card.onclick = () => pressCard(idx);
-    container.appendChild(container.appendChild(card));
+    container.appendChild(card);
   });
 }
 
