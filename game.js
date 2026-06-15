@@ -76,12 +76,15 @@ function handleModeSelectChange() {
 
 function handleBaseSelectChange() {
   const mode = document.getElementById("overlay-mode-select").value;
-  if (mode === "mix") return;
-
-  const base = parseInt(document.getElementById("overlay-base-select").value);
   const timeContainer = document.getElementById("hex-time-container");
   const hintSection = document.getElementById("menu-section-hint");
 
+  if (mode === "mix" || mode === "timeattack") {
+    if (timeContainer) timeContainer.style.display = "none";
+    if (mode === "mix") return;
+  }
+
+  const base = parseInt(document.getElementById("overlay-base-select").value);
   const optTarget = document.getElementById("opt-target");
   const labelTarget = document.getElementById("label-opt-target");
   const optNone = document.getElementById("opt-none");
@@ -95,7 +98,7 @@ function handleBaseSelectChange() {
     labelTarget.style.opacity = "1";
   }
 
-  if (base === 16) {
+  if (base === 16 && mode !== "timeattack") {
     if (timeContainer) timeContainer.style.display = "flex";
     if (hintSection) hintSection.style.display = "block";
   } else if (base === 4 || base === 2) {
@@ -115,7 +118,10 @@ function showHomeMenu() {
   document.getElementById("overlay-content").style.display = "flex";
 
   score = 0;
-  document.getElementById("score-val").innerText = score;
+  const scoreBox = document.getElementById("game-score-box");
+  if (scoreBox) {
+    scoreBox.innerHTML = `SCORE: <span id="score-val" class="score-val">0</span> / 10`;
+  }
   document.getElementById("timer-val").innerText = "60";
   document.getElementById("gauge-bar").style.width = "100%";
 
@@ -130,6 +136,10 @@ function showHomeMenu() {
 
   pastProblemsHistory = [];
   renderDummyCards();
+
+  document.getElementById("overlay-title").innerHTML = "📢 MAKE10 PUZZLE";
+  document.getElementById("overlay-msg").innerHTML =
+    "条件を選んで、ゲームスタートボタンを押してください。";
 
   const modeSelect = document.getElementById("overlay-mode-select");
   const btnMain = document.getElementById("overlay-btn-main");
@@ -203,8 +213,8 @@ function initGameRound() {
   document.getElementById("game-base-select").value = currentBase;
 
   if (gameMode === "timeattack") {
-    maxRoundTime = 180;
-    timeLeft = 180;
+    maxRoundTime = 300;
+    timeLeft = 300;
   } else {
     timeLeft = maxRoundTime;
   }
@@ -256,7 +266,7 @@ function startGameRound() {
   renderCards();
   clearFormulaInternal();
 
-  if (gameMode === "timeattack" && timerInterval !== null && timeLeft < 180) {
+  if (gameMode === "timeattack" && timerInterval !== null && timeLeft < 300) {
     document.getElementById("timer-val").innerText = timeLeft;
   } else {
     startTimer();
@@ -291,8 +301,17 @@ function togglePause() {
     clearInterval(timerInterval);
 
     document.getElementById("overlay-title").innerHTML = "⏸️ PAUSE";
+
+    let modeLabelText = "";
+    if (gameMode === "normal") modeLabelText = "通常モード (10問チャレンジ)";
+    if (gameMode === "timeattack")
+      modeLabelText = "タイムアタック (5分一本勝負)";
+    if (gameMode === "survival")
+      modeLabelText = "サバイバルモード (ノーミス耐久)";
+    if (gameMode === "mix") modeLabelText = "進数ごちゃまぜモード";
+
     document.getElementById("overlay-msg").innerHTML =
-      "ゲームを一時停止しています";
+      `ゲームを一時停止しています<br><span style="color: var(--primary-color); font-weight: bold;">【 現在: ${modeLabelText} 】</span>`;
 
     const baseSection = document.getElementById("menu-section-base");
     const timeContainer = document.getElementById("hex-time-container");
@@ -382,6 +401,25 @@ function handleNextStageClick() {
   }
 }
 
+function showAnswerAndNextButton(titlePrefix) {
+  const resultBox = document.getElementById("result-box");
+  if (!resultBox) return;
+
+  let cleanAns = currentAnswerFormula
+    .replace(/\*/g, " × ")
+    .replace(/\//g, " ÷ ");
+  let displayTargetStr =
+    gameMode === "mix" ? "10" : toCustomBaseString(targetValue);
+
+  resultBox.innerHTML = `
+        <div>
+            <span class="fail-text" style="font-weight:bold;">${titlePrefix} 答えの一例：</span>
+            <span style="color:#ff9f1c; font-size:18px; font-weight:bold; letter-spacing:1px;">${cleanAns} = ${displayTargetStr}</span>
+        </div>
+        <button class="btn-next-stage" onclick="handleNextStageClick()">次の問題へ ➔</button>
+    `;
+}
+
 // --- ⚙️ サバイバル / タイムアタック専用ゲームオーバー処理 ---
 function showGameOverSurvival() {
   gameState = "GAMEOVER";
@@ -397,7 +435,7 @@ function showGameOverTimeAttack() {
   document.getElementById("overlay-content").style.display = "flex";
   document.getElementById("overlay-title").innerHTML = "⏱️ TIME UP!";
   document.getElementById("overlay-msg").innerHTML =
-    `3分間が終了しました！<br>あなたのタイムアタック記録は<br><span style="font-size:28px; color:var(--success-color); font-weight:bold;">${score} 問</span> です！`;
+    `5分間が終了しました！<br>あなたのタイムアタック記録は<br><span style="font-size:28px; color:var(--success-color); font-weight:bold;">${score} 問</span> です！`;
   hideMenuElements();
 }
 
@@ -412,10 +450,14 @@ function hideMenuElements() {
   if (baseSection) baseSection.style.display = "none";
   document.getElementById("overlay-mode-select").style.display = "none";
 
-  document.getElementById("overlay-btn-main").style.display = "block";
-  document.getElementById("overlay-btn-main").innerText = "もう一度遊ぶ";
-  document.getElementById("overlay-btn-sub").style.display = "block";
-  document.getElementById("overlay-btn-sub").innerText = "🏠 ホーム画面に戻る";
+  const btnMain = document.getElementById("overlay-btn-main");
+  if (btnMain) btnMain.style.display = "none";
+
+  const btnSub = document.getElementById("overlay-btn-sub");
+  if (btnSub) {
+    btnSub.style.display = "block";
+    btnSub.innerText = "🏠 ホーム画面に戻る";
+  }
 
   const toggleBtn = document.querySelector(".btn-toggle-options");
   if (toggleBtn) toggleBtn.style.display = "none";
@@ -503,10 +545,7 @@ function updateFormulaDisplay() {
         if (scoreValSpan) scoreValSpan.innerText = score;
 
         if (gameMode === "normal" && score >= 10) {
-          resultBox.innerHTML = `
-                        <span class="success-text">🎉 正解！ [10 / 10] 達成！</span>
-                        <button class="btn-next-stage" onclick="handleNextStageClick()">結果を見る ➔</button>
-                    `;
+          showGameClearFinal();
         } else {
           resultBox.innerHTML = `
                         <span class="success-text">🎉 正解！ [+1 Point]</span>
@@ -520,6 +559,13 @@ function updateFormulaDisplay() {
   }
 }
 
+function cleanUpCardsUsedState() {
+  problemNumbers.forEach((_, idx) => {
+    const card = document.getElementById(`card-${idx}`);
+    if (card) card.classList.remove("used");
+  });
+}
+
 function clearFormulaInternal() {
   currentFormula = [];
   usedCardIndices = [];
@@ -527,11 +573,7 @@ function clearFormulaInternal() {
   formulaBox.innerText = "数式を作ってください";
   formulaBox.style.color = "#555";
   document.getElementById("result-box").innerText = "計算結果: -";
-
-  problemNumbers.forEach((_, idx) => {
-    const card = document.getElementById(`card-${idx}`);
-    if (card) card.classList.remove("used");
-  });
+  cleanUpCardsUsedState();
 }
 
 function clearFormula() {
@@ -612,69 +654,71 @@ function isCleanInteger(val) {
   return Number.isFinite(val) && Math.abs(val % 1) < 0.0001;
 }
 
-function checkIntRoute(p, o1, o2, o3, treeType) {
+function checkIntRoute(p, i, j, k, t) {
   let a = p[0],
     b = p[1],
     c = p[2],
     d = p[3];
   let step1, step2;
 
-  if (treeType === 0) {
-    step1 = calcMath(a, b, o1);
-    step2 = calcMath(c, d, o3);
+  if (t === 0) {
+    step1 = calcMath(a, b, i);
+    step2 = calcMath(c, d, k);
     if (!isCleanInteger(step1) || !isCleanInteger(step2)) return false;
-    return isCleanInteger(calcMath(step1, step2, o2));
-  } else if (treeType === 1) {
-    step1 = calcMath(a, b, o1);
+    return isCleanInteger(calcMath(step1, step2, j));
+  } else if (t === 1) {
+    step1 = calcMath(a, b, i);
     if (!isCleanInteger(step1)) return false;
-    step2 = calcMath(step1, c, o2);
+    step2 = calcMath(step1, c, j);
     if (!isCleanInteger(step2)) return false;
-    return isCleanInteger(calcMath(step2, d, o3));
-  } else if (treeType === 2) {
-    step1 = calcMath(b, c, o2);
+    return isCleanInteger(calcMath(step2, d, k));
+  } else if (t === 2) {
+    step1 = calcMath(b, c, j);
     if (!isCleanInteger(step1)) return false;
-    step2 = calcMath(a, step1, o1);
+    step2 = calcMath(step1, d, k);
     if (!isCleanInteger(step2)) return false;
-    return isCleanInteger(calcMath(step2, d, o3));
-  } else if (treeType === 3) {
-    step1 = calcMath(b, c, o2);
+    return isCleanInteger(calcMath(a, step2, i));
+  } else if (t === 3) {
+    step1 = calcMath(c, d, k);
     if (!isCleanInteger(step1)) return false;
-    step2 = calcMath(step1, d, o3);
+    step2 = calcMath(b, step1, j);
     if (!isCleanInteger(step2)) return false;
-    return isCleanInteger(calcMath(a, step2, o1));
-  } else if (treeType === 4) {
-    step1 = calcMath(c, d, o3);
+    return isCleanInteger(calcMath(a, step2, i));
+  } else if (t === 4) {
+    step1 = calcMath(b, c, j);
     if (!isCleanInteger(step1)) return false;
-    step2 = calcMath(b, step1, o2);
+    step2 = calcMath(a, step1, i);
     if (!isCleanInteger(step2)) return false;
-    return isCleanInteger(calcMath(a, step2, o1));
+    return isCleanInteger(calcMath(step2, d, k));
   }
   return false;
 }
 
 const opStrs = ["+", "-", "*", "/"];
+// ★【完全復活】削ぎ落とされていた数式文字列生成関数を完全に復帰
 function buildFormulaString(p, o1, o2, o3, treeType, customBases = null) {
   let A = customBases
     ? toBaseString(p[0], customBases[0])
-    : toCustomBaseString(p[0]);
+    : toBaseString(p[0], currentBase);
   let B = customBases
     ? toBaseString(p[1], customBases[1])
-    : toCustomBaseString(p[1]);
+    : toBaseString(p[1], currentBase);
   let C = customBases
     ? toBaseString(p[2], customBases[2])
-    : toCustomBaseString(p[2]);
+    : toBaseString(p[2], currentBase);
   let D = customBases
     ? toBaseString(p[3], customBases[3])
-    : toCustomBaseString(p[3]);
+    : toBaseString(p[3], currentBase);
   let op1 = opStrs[o1],
     op2 = opStrs[o2],
     op3 = opStrs[o3];
 
   if (treeType === 0) return `((${A})${op1}(${B}))${op2}((${C})${op3}(${D}))`;
   if (treeType === 1) return `(((${A})${op1}(${B}))${op2}(${C}))${op3}(${D})`;
-  if (treeType === 2) return `((${A})${op1}((${B})${op2}(${C})))${op3}(${D})`;
-  if (treeType === 3) return `(${A})${op1}(((${B})${op2}(${C}))${op3}(${D}))`;
-  if (treeType === 4) return `(${A})${op1}((${B})${op2}((${C})${op3}(${D})))`;
+  if (treeType === 2) return `(${A})${op1}((((${B})${op2}(${C}))${op3}(${D}))`;
+  if (treeType === 3) return `(${A})${op1}((${B})${op2}((${C})${op3}(${D})))`;
+  if (treeType === 4) return `((${A})${op1}((${B})${op2}(${C})))${op3}(${D})`;
+  return "";
 }
 
 function fastSolve(
@@ -707,9 +751,9 @@ function fastSolve(
           let vals = [
             calcMath(calcMath(a, b, i), calcMath(c, d, k), j),
             calcMath(calcMath(calcMath(a, b, i), c, j), d, k),
-            calcMath(calcMath(a, calcMath(b, c, j), i), d, k),
             calcMath(a, calcMath(calcMath(b, c, j), d, k), i),
             calcMath(a, calcMath(b, calcMath(c, d, k), j), i),
+            calcMath(calcMath(a, calcMath(b, c, j), i), d, k),
           ];
 
           for (let t = 0; t < 5; t++) {
@@ -755,7 +799,6 @@ function fastSolve(
   return false;
 }
 
-// ★【バグ修正】消失していた重複ガードチェック関数を確実に再定義
 function isProblemRepeated(newNums) {
   let sortedNew = [...newNums].sort((a, b) => a - b).join(",");
   for (let past of pastProblemsHistory) {
@@ -913,7 +956,7 @@ function showGameClearFinal() {
   document.getElementById("overlay-content").style.display = "flex";
   document.getElementById("overlay-title").innerHTML = "🎉 GAME CLEAR!";
   document.getElementById("overlay-msg").innerHTML =
-    "素晴らしい！見事10ポイント獲得しました！";
+    "素晴らしい！見見事10ポイント獲得しました！";
   hideMenuElements();
 }
 
