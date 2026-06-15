@@ -20,7 +20,6 @@ let blindCardIndex = -1;
 // 同じパズルの連続出題を防ぐ履歴リスト
 let pastProblemsHistory = [];
 
-// ページが読み込まれたら、絶対に最初にこの関数を実行する（スタート画面を強制する）
 window.onload = function () {
   showHomeMenu();
 };
@@ -55,7 +54,6 @@ function showHomeMenu() {
   gameState = "SETUP";
   if (timerInterval) clearInterval(timerInterval);
 
-  // 画面の表示状態を「スタート画面」に強制統一
   document.getElementById("game-overlay").style.display = "flex";
   document.getElementById("overlay-content").style.display = "flex";
 
@@ -533,6 +531,7 @@ function solveStrictly(nums, target, strictFractionCheck = false) {
     }
   }
 
+  // ★【タイポ修正完了】変数への不正な代入を消去し、安全に解答パターンを確定
   if (strictFractionCheck && hasFractionSolution && !hasIntegerSolution) {
     storeAnswerFormula(
       fractionAnswerPattern.fPattern,
