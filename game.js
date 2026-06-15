@@ -56,6 +56,7 @@ function showHomeMenu() {
   document.getElementById("game-overlay").style.display = "flex";
   document.getElementById("overlay-content").style.display = "flex";
 
+  // ★【修正】ゲームクリア画面などからホームに戻ったとき、確実にスコアを 0 にリセットする
   score = 0;
   document.getElementById("score-val").innerText = score;
   document.getElementById("timer-val").innerText = "60";
@@ -362,7 +363,7 @@ function updateFormulaDisplay() {
       resultBox.innerText = `計算結果: ${displayRes}`;
 
       let allCardsUsed = usedCardIndices.length === 4;
-      if (allCardsUsed && Math.abs(res - targetValue) < 0.001) {
+      if (allCardsUsed && Math.abs(res - targetValue) < 0.01) {
         gameState = "TRANSITION";
         clearInterval(timerInterval);
 
@@ -462,7 +463,6 @@ function toCustomBaseString(num) {
   return num.toString(currentBase).toUpperCase();
 }
 
-// 【劇的改善】eval()を完全に排除した超高速・自作数学エンジン
 function calcMath(a, b, opIndex) {
   if (opIndex === 0) return a + b;
   if (opIndex === 1) return a - b;
@@ -598,7 +598,6 @@ function isProblemRepeated(newNums) {
   return false;
 }
 
-// 圧倒的な速度で純粋なランダムを何千回でも処理できるエンジン
 function preGenerateProblem() {
   let maxAttempts = modeFraction ? 5000 : 2000;
   let nums = [];
@@ -631,7 +630,6 @@ function preGenerateProblem() {
     }
   }
 
-  // 分数モードで5000回回しても出なかった場合は、通常の整数OKルールに落として再探査
   if (!found && modeFraction) {
     for (let i = 0; i < 1000; i++) {
       nums = [];
@@ -652,7 +650,6 @@ function preGenerateProblem() {
     }
   }
 
-  // それでもダメな場合の緊急用鉄板データ
   if (!found) {
     if (currentBase === 16) problemNumbers = [2, 4, 8, 2];
     else if (currentBase === 10) problemNumbers = [2, 3, 5, 0];
