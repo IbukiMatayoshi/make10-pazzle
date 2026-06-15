@@ -66,6 +66,11 @@ function handleModeSelectChange() {
     if (optTarget.checked) optNone.checked = true;
     optTarget.disabled = true;
     targetLabel.style.opacity = "0.3";
+
+    const timeContainer = document.getElementById("hex-time-container");
+    const hintSection = document.getElementById("menu-section-hint");
+    if (timeContainer) timeContainer.style.display = "flex";
+    if (hintSection) hintSection.style.display = "block";
   } else {
     if (baseSection) baseSection.style.display = "block";
     optTarget.disabled = false;
@@ -79,9 +84,10 @@ function handleBaseSelectChange() {
   const timeContainer = document.getElementById("hex-time-container");
   const hintSection = document.getElementById("menu-section-hint");
 
-  if (mode === "mix" || mode === "timeattack") {
+  if (mode === "mix") return;
+
+  if (mode === "timeattack") {
     if (timeContainer) timeContainer.style.display = "none";
-    if (mode === "mix") return;
   }
 
   const base = parseInt(document.getElementById("overlay-base-select").value);
@@ -100,12 +106,13 @@ function handleBaseSelectChange() {
 
   if (base === 16 && mode !== "timeattack") {
     if (timeContainer) timeContainer.style.display = "flex";
-    if (hintSection) hintSection.style.display = "block";
-  } else if (base === 4 || base === 2) {
-    if (timeContainer) timeContainer.style.display = "none";
-    if (hintSection) hintSection.style.display = "block";
   } else {
     if (timeContainer) timeContainer.style.display = "none";
+  }
+
+  if (base === 16 || base === 4 || base === 2) {
+    if (hintSection) hintSection.style.display = "block";
+  } else {
     if (hintSection) hintSection.style.display = "none";
   }
 }
@@ -135,6 +142,8 @@ function showHomeMenu() {
   document.getElementById("pause-btn").disabled = true;
 
   pastProblemsHistory = [];
+
+  // 【バグ修正1】最下部に定義したrenderDummyCardsを安全に呼び出す
   renderDummyCards();
 
   document.getElementById("overlay-title").innerHTML = "📢 MAKE10 PUZZLE";
@@ -145,14 +154,21 @@ function showHomeMenu() {
   const btnMain = document.getElementById("overlay-btn-main");
   const btnSub = document.getElementById("overlay-btn-sub");
   const baseSection = document.getElementById("menu-section-base");
+  const menuSections = document.querySelectorAll(".menu-section");
 
   if (modeSelect) modeSelect.style.display = "block";
   if (btnMain) {
     btnMain.style.display = "block";
-    btnMain.innerText = "ゲームスタート";
+    btnMain.innerText = "ゲームスタート"; // 文字をスタート用にリセット
   }
+
+  // 【バグ修正2】ホームメニューを開いたときは、サブの「中断してメニューへ」ボタンを100%確実に非表示にする
   if (btnSub) btnSub.style.display = "none";
   if (baseSection) baseSection.style.display = "block";
+
+  menuSections.forEach((sec) => {
+    sec.style.display = "block";
+  });
 
   const toggleBtn = document.querySelector(".btn-toggle-options");
   if (toggleBtn) {
@@ -177,7 +193,8 @@ function initGameRound() {
     targetValue = 10;
     isHintEnabled =
       document.getElementById("overlay-hint-select").value === "on";
-    maxRoundTime = 60;
+    maxRoundTime =
+      parseInt(document.getElementById("overlay-time-select").value) || 60;
   } else {
     currentBase = parseInt(
       document.getElementById("overlay-base-select").value,
@@ -221,7 +238,7 @@ function initGameRound() {
 
   const scoreBox = document.getElementById("game-score-box");
   if (scoreBox) {
-    if (gameMode === "normal") {
+    if (gameMode === "normal" || gameMode === "mix") {
       scoreBox.innerHTML = `SCORE: <span id="score-val" class="score-val">${score}</span> / 10`;
     } else {
       scoreBox.innerHTML = `SOLVED: <span id="score-val" class="score-val">${score}</span> 問`;
@@ -280,6 +297,8 @@ function overlayMainAction() {
     gameState === "GAMEOVER"
   ) {
     initGameRound();
+  } else if (gameState === "PAUSED") {
+    togglePause();
   }
 }
 
@@ -294,9 +313,15 @@ function overlaySubAction() {
 }
 
 function togglePause() {
-  if (gameState !== "PLAYING" && gameState !== "PAUSED") return;
+  if (
+    gameState !== "PLAYING" &&
+    gameState !== "PAUSED" &&
+    gameState !== "TRANSITION"
+  )
+    return;
 
-  if (gameState === "PLAYING") {
+  if (gameState === "PLAYING" || gameState === "TRANSITION") {
+    this.prePauseState = gameState;
     gameState = "PAUSED";
     clearInterval(timerInterval);
 
@@ -313,6 +338,11 @@ function togglePause() {
     document.getElementById("overlay-msg").innerHTML =
       `ゲームを一時停止しています<br><span style="color: var(--primary-color); font-weight: bold;">【 現在: ${modeLabelText} 】</span>`;
 
+    const menuSections = document.querySelectorAll(".menu-section");
+    menuSections.forEach((sec) => {
+      sec.style.display = "none";
+    });
+
     const baseSection = document.getElementById("menu-section-base");
     const timeContainer = document.getElementById("hex-time-container");
     const hintSection = document.getElementById("menu-section-hint");
@@ -326,15 +356,23 @@ function togglePause() {
     document.querySelector(".btn-toggle-options").style.display = "none";
     document.getElementById("difficulty-options-panel").style.display = "none";
 
-    document.getElementById("overlay-btn-main").style.display = "none";
+    const btnMain = document.getElementById("overlay-btn-main");
+    if (btnMain) {
+      btnMain.style.display = "block";
+      btnMain.innerText = "▶ ゲームを再開する";
+    }
+
     document.getElementById("overlay-btn-sub").style.display = "block";
     document.getElementById("overlay-btn-sub").innerText = "中断してメニューへ";
 
     document.getElementById("game-overlay").style.display = "flex";
   } else {
-    gameState = "PLAYING";
+    gameState = this.prePauseState || "PLAYING";
     document.getElementById("game-overlay").style.display = "none";
-    timerInterval = setInterval(timerTick, 1000);
+
+    if (gameState === "PLAYING") {
+      timerInterval = setInterval(timerTick, 1000);
+    }
   }
 }
 
@@ -383,9 +421,13 @@ function giveUpAndShowAnswer() {
 }
 
 function handleNextStageClick() {
-  if (gameMode === "normal" && score >= 10) {
+  if ((gameMode === "normal" || gameMode === "mix") && score >= 10) {
     showGameClearFinal();
   } else {
+    if (gameMode !== "timeattack") {
+      timeLeft = maxRoundTime;
+    }
+
     if (modeTargetShift && gameMode !== "mix") {
       if (currentBase === 4) targetValue = Math.floor(Math.random() * 8) + 2;
       else if (currentBase === 8)
@@ -444,10 +486,14 @@ function hideMenuElements() {
   const timeContainer = document.getElementById("hex-time-container");
   const hintSection = document.getElementById("menu-section-hint");
   const baseSection = document.getElementById("menu-section-base");
+  const menuSections = document.querySelectorAll(".menu-section");
 
   if (timeContainer) timeContainer.style.display = "none";
   if (hintSection) hintSection.style.display = "none";
   if (baseSection) baseSection.style.display = "none";
+  menuSections.forEach((sec) => {
+    sec.style.display = "none";
+  });
   document.getElementById("overlay-mode-select").style.display = "none";
 
   const btnMain = document.getElementById("overlay-btn-main");
@@ -544,7 +590,7 @@ function updateFormulaDisplay() {
         const scoreValSpan = document.getElementById("score-val");
         if (scoreValSpan) scoreValSpan.innerText = score;
 
-        if (gameMode === "normal" && score >= 10) {
+        if ((gameMode === "normal" || gameMode === "mix") && score >= 10) {
           showGameClearFinal();
         } else {
           resultBox.innerHTML = `
@@ -695,7 +741,6 @@ function checkIntRoute(p, i, j, k, t) {
 }
 
 const opStrs = ["+", "-", "*", "/"];
-// ★【完全復活】削ぎ落とされていた数式文字列生成関数を完全に復帰
 function buildFormulaString(p, o1, o2, o3, treeType, customBases = null) {
   let A = customBases
     ? toBaseString(p[0], customBases[0])
@@ -751,9 +796,9 @@ function fastSolve(
           let vals = [
             calcMath(calcMath(a, b, i), calcMath(c, d, k), j),
             calcMath(calcMath(calcMath(a, b, i), c, j), d, k),
+            calcMath(calcMath(a, calcMath(b, c, j), i), d, k),
             calcMath(a, calcMath(calcMath(b, c, j), d, k), i),
             calcMath(a, calcMath(b, calcMath(c, d, k), j), i),
-            calcMath(calcMath(a, calcMath(b, c, j), i), d, k),
           ];
 
           for (let t = 0; t < 5; t++) {
@@ -935,8 +980,10 @@ function renderCards() {
   });
 }
 
+// ★【バグ修正1】消失していたダミーカード生成関数を完全に復元
 function renderDummyCards() {
   const container = document.getElementById("card-container");
+  if (!container) return;
   container.innerHTML = "";
   for (let i = 0; i < 4; i++) {
     const card = document.createElement("div");
@@ -956,7 +1003,7 @@ function showGameClearFinal() {
   document.getElementById("overlay-content").style.display = "flex";
   document.getElementById("overlay-title").innerHTML = "🎉 GAME CLEAR!";
   document.getElementById("overlay-msg").innerHTML =
-    "素晴らしい！見見事10ポイント獲得しました！";
+    "素晴らしい！見事10ポイント獲得しました！";
   hideMenuElements();
 }
 
