@@ -17,9 +17,6 @@ let modeTargetShift = false;
 let modeBlind = false;
 let blindCardIndex = -1;
 
-// 同じパズルの連続出題を防ぐ履歴リスト
-let pastProblemsHistory = [];
-
 window.onload = function () {
   showHomeMenu();
 };
@@ -70,8 +67,6 @@ function showHomeMenu() {
 
   document.getElementById("giveup-btn").disabled = true;
   document.getElementById("pause-btn").disabled = true;
-
-  pastProblemsHistory = [];
 
   renderDummyCards();
 
@@ -296,7 +291,7 @@ function showAnswerAndNextButton(titlePrefix) {
             <span class="fail-text" style="font-weight:bold;">${titlePrefix} 答えの一例：</span>
             <span style="color:#ff9f1c; font-size:18px; font-weight:bold; letter-spacing:1px;">${cleanAns} = ${toCustomBaseString(targetValue)}</span>
         </div>
-        <button class="btn-next-stage" onclick="handleNextStageClick()">次の問題へ ➔</button>
+        <button class="btn-next-stage" onclick="handleNextStageClick()">Next ➔</button>
     `;
 }
 
@@ -397,8 +392,9 @@ function clearFormulaInternal() {
   document.getElementById("result-box").innerText = "計算結果: -";
 
   problemNumbers.forEach((_, idx) => {
-    const card = document.getElementById(`card-${idx}`);
-    if (card) card.classList.remove("used");
+    const card = document.createElement("div"); // ダミー用
+    const existingCard = document.getElementById(`card-${idx}`);
+    if (existingCard) existingCard.classList.remove("used");
   });
 }
 
@@ -553,25 +549,12 @@ function checkIntegerOnly(v1, v2, op) {
   return true;
 }
 
-function isProblemRepeated(newNums) {
-  let sortedNew = [...newNums].sort((a, b) => a - b).join(",");
-  for (let past of pastProblemsHistory) {
-    if (past === sortedNew) return true;
-  }
-  return false;
-}
-
 function preGenerateProblem() {
-  let maxAttempts = 200; // 重複探査用の施行回数は安全なサイズに
+  let maxAttempts = 1000;
   let nums = [];
   let found = false;
 
   blindCardIndex = modeBlind ? Math.floor(Math.random() * 4) : -1;
-
-  // 進数に応じた最大履歴保持数の決定（バリエーションが少ない進数は重複を許容するガード）
-  let maxHistorySize = 3;
-  if (currentBase === 4) maxHistorySize = 1;
-  if (currentBase === 2) maxHistorySize = 0;
 
   for (let i = 0; i < maxAttempts; i++) {
     nums = [];
@@ -585,29 +568,22 @@ function preGenerateProblem() {
       }
     }
 
-    // ★【修正のキモ】履歴チェックは「解ける問題が見つかったあと」に判定する安全設計へ
+    // 重複チェックを撤廃。生成された4つの数字が解ければ即座に確定
     if (modeFraction) {
       if (solveStrictly(nums, targetValue, true)) {
         problemNumbers = nums;
         found = true;
-        // 重複していなければ即座に採用してループを抜ける
-        if (!isProblemRepeated(nums) || i > 50) {
-          // 50回以上見つからなければ重複を許容
-          break;
-        }
+        break;
       }
     } else {
       if (solveStrictly(nums, targetValue, false)) {
         problemNumbers = nums;
         found = true;
-        if (!isProblemRepeated(nums) || i > 50) {
-          break;
-        }
+        break;
       }
     }
   }
 
-  // もし最大施行回数（200回）回しても見つからなかった場合のフォールバック（緊急用鉄板データ）
   if (!found) {
     if (modeFraction) {
       if (currentBase === 16) problemNumbers = [3, 3, 8, 8];
@@ -620,15 +596,6 @@ function preGenerateProblem() {
         problemNumbers = [1, 1, 1, targetValue - 3 > 0 ? targetValue - 3 : 1];
     }
     solveStrictly(problemNumbers, targetValue, false);
-  }
-
-  // 今回の問題を履歴に登録
-  if (maxHistorySize > 0) {
-    pastProblemsHistory.push(
-      [...problemNumbers].sort((a, b) => a - b).join(","),
-    );
-    if (pastProblemsHistory.length > maxHistorySize)
-      pastProblemsHistory.shift();
   }
 }
 
