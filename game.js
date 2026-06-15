@@ -1,6 +1,8 @@
+// --- ⚙️ グローバルシステム変数 ---
+let gameMode = "normal"; // "normal" | "timeattack" | "survival" | "mix"
 let currentBase = 10;
 let targetValue = 10;
-let problemNumbers = [];
+let problemNumbers = []; // 通常時: 数値の配列 / ミックス時: {val: 10進数値, base: 進数} のオブジェクト配列
 let usedCardIndices = [];
 let currentFormula = [];
 let score = 0;
@@ -19,10 +21,12 @@ let blindCardIndex = -1;
 
 let pastProblemsHistory = [];
 
+// 起動時の初期化
 window.onload = function () {
   showHomeMenu();
 };
 
+// --- 🎨 UI・テーマ制御系 ---
 function toggleTheme() {
   const body = document.body;
   const btn = document.getElementById("theme-toggle-btn");
@@ -42,73 +46,48 @@ function toggleOptionsVisibility() {
   const btn = document.querySelector(".btn-toggle-options");
   if (panel.style.display === "flex") {
     panel.style.display = "none";
-    btn.innerText = "🛠️ 高度な設定を表示";
+    btn.innerText = "🛠️ 特殊ルールを表示";
   } else {
     panel.style.display = "flex";
-    btn.innerText = "🛠️ 高度な設定を隠す";
+    btn.innerText = "🛠️ 特殊ルールを隠す";
   }
 }
 
-function showHomeMenu() {
-  gameState = "SETUP";
-  if (timerInterval) clearInterval(timerInterval);
+// --- 📂 メニュー画面・モード変更制御（新フローの要） ---
+function handleModeSelectChange() {
+  const mode = document.getElementById("overlay-mode-select").value;
+  const baseSection = document.getElementById("menu-section-base");
+  const targetLabel = document.getElementById("label-opt-target");
+  const optTarget = document.getElementById("opt-target");
+  const optNone = document.getElementById("opt-none");
 
-  document.getElementById("game-overlay").style.display = "flex";
-  document.getElementById("overlay-content").style.display = "flex";
-
-  // スコアとゲームデータのクリーンアップ
-  score = 0;
-  document.getElementById("score-val").innerText = score;
-  document.getElementById("timer-val").innerText = "60";
-  document.getElementById("gauge-bar").style.width = "100%";
-
-  document.getElementById("target-info").innerText = "進数を選択してスタート！";
-  document.getElementById("formula-box").innerText = "数式を作ってください";
-  document.getElementById("formula-box").style.color = "#555";
-  document.getElementById("result-box").innerText = "計算結果: -";
-  document.getElementById("reference-table").innerHTML = "";
-
-  document.getElementById("giveup-btn").disabled = true;
-  document.getElementById("pause-btn").disabled = true;
-
-  pastProblemsHistory = [];
-
-  renderDummyCards();
-
-  // 【バグ修正】ホーム画面に戻ったとき、ゲームスタートボタンや設定項目を確実に初期化して表示する
-  document.getElementById("overlay-title").innerHTML = "📢 MAKE10 PUZZLE";
-  document.getElementById("overlay-msg").innerHTML =
-    "条件を選んで、<br>ゲームスタートボタンを押してください。";
-
-  document.getElementById("overlay-base-select").style.display = "block";
-  document.getElementById("overlay-btn-main").style.display = "block"; // ★ゲームスタートボタンを再表示
-  document.getElementById("overlay-btn-main").innerText = "ゲームスタート";
-
-  document.getElementById("overlay-btn-sub").style.display = "none";
-
-  const toggleBtn = document.querySelector(".btn-toggle-options");
-  if (toggleBtn) {
-    toggleBtn.style.display = "inline-block";
-    toggleBtn.innerText = "🛠️ 高度な設定を表示";
+  if (mode === "mix") {
+    // 「進数ごちゃまぜ」の時は進数設定を隠し、ターゲット変動オプションを強制無効化
+    baseSection.style.display = "none";
+    if (optTarget.checked) optNone.checked = true;
+    optTarget.disabled = true;
+    targetLabel.style.opacity = "0.3";
+  } else {
+    baseSection.style.display = "block";
+    optTarget.disabled = false;
+    targetLabel.style.opacity = "1";
+    handleBaseSelectChange(); // 通常の進数連動を走らせる
   }
-  document.getElementById("difficulty-options-panel").style.display = "none";
-
-  handleBaseSelectChange();
 }
 
 function handleBaseSelectChange() {
+  const mode = document.getElementById("overlay-mode-select").value;
+  if (mode === "mix") return;
+
   const base = parseInt(document.getElementById("overlay-base-select").value);
   const timeContainer = document.getElementById("hex-time-container");
   const hintContainer = document.getElementById("hint-select-container");
-
   const optTarget = document.getElementById("opt-target");
   const labelTarget = document.getElementById("label-opt-target");
   const optNone = document.getElementById("opt-none");
 
   if (base === 2) {
-    if (optTarget.checked) {
-      optNone.checked = true;
-    }
+    if (optTarget.checked) optNone.checked = true;
     optTarget.disabled = true;
     labelTarget.style.opacity = "0.4";
   } else {
@@ -128,41 +107,108 @@ function handleBaseSelectChange() {
   }
 }
 
+function showHomeMenu() {
+  gameState = "SETUP";
+  if (timerInterval) clearInterval(timerInterval);
+
+  document.getElementById("game-overlay").style.display = "flex";
+  document.getElementById("overlay-content").style.display = "flex";
+
+  score = 0;
+  document.getElementById("score-val").innerText = score;
+  document.getElementById("timer-val").innerText = "60";
+  document.getElementById("gauge-bar").style.width = "100%";
+
+  document.getElementById("target-info").innerText = "モードを選んでスタート！";
+  document.getElementById("formula-box").innerText = "数式を作ってください";
+  document.getElementById("formula-box").style.color = "#555";
+  document.getElementById("result-box").innerText = "計算結果: -";
+  document.getElementById("reference-table").innerHTML = "";
+
+  document.getElementById("giveup-btn").disabled = true;
+  document.getElementById("pause-btn").disabled = true;
+
+  pastProblemsHistory = [];
+  renderDummyCards();
+
+  // メニューコントロール枠の初期表示リセット
+  document.getElementById("overlay-title").innerHTML = "📢 MAKE10 PUZZLE";
+  document.getElementById("overlay-msg").innerHTML =
+    "条件を選んで、ゲームスタートボタンを押してください。";
+
+  document.getElementById("overlay-mode-select").style.display = "block";
+  document.getElementById("overlay-btn-main").style.display = "block";
+  document.getElementById("overlay-btn-main").innerText = "ゲームスタート";
+  document.getElementById("overlay-btn-sub").style.display = "none";
+
+  const toggleBtn = document.querySelector(".btn-toggle-options");
+  if (toggleBtn) {
+    toggleBtn.style.display = "inline-block";
+    toggleBtn.innerText = "🛠️ 特殊ルールを表示";
+  }
+  document.getElementById("difficulty-options-panel").style.display = "none";
+
+  // セレクト枠の連動初期化
+  handleModeSelectChange();
+}
+
+// --- 🎮 ゲームループ・ステージ初期化 ---
 function initGameRound() {
-  currentBase = parseInt(document.getElementById("overlay-base-select").value);
-  document.getElementById("game-base-select").value = currentBase;
+  // 選択された大枠モードを取得
+  gameMode = document.getElementById("overlay-mode-select").value;
 
   modeFraction = document.getElementById("opt-fraction").checked;
   modeTargetShift = document.getElementById("opt-target").checked;
   modeBlind = document.getElementById("opt-blind").checked;
 
-  if (modeTargetShift) {
-    if (currentBase === 4) targetValue = Math.floor(Math.random() * 8) + 2;
-    else if (currentBase === 8)
-      targetValue = Math.floor(Math.random() * 15) + 3;
-    else if (currentBase === 10)
-      targetValue = Math.floor(Math.random() * 20) + 5;
-    else if (currentBase === 16)
-      targetValue = Math.floor(Math.random() * 30) + 5;
+  if (gameMode === "mix") {
+    currentBase = "mix";
+    targetValue = 10; // ごちゃまぜ時は10進数の「10」を作るのが一律の目標
+    isHintEnabled =
+      document.getElementById("overlay-hint-select").value === "on";
+    maxRoundTime = 60;
   } else {
-    targetValue = currentBase;
+    currentBase = parseInt(
+      document.getElementById("overlay-base-select").value,
+    );
+    if (modeTargetShift) {
+      if (currentBase === 4) targetValue = Math.floor(Math.random() * 8) + 2;
+      else if (currentBase === 8)
+        targetValue = Math.floor(Math.random() * 15) + 3;
+      else if (currentBase === 10)
+        targetValue = Math.floor(Math.random() * 20) + 5;
+      else if (currentBase === 16)
+        targetValue = Math.floor(Math.random() * 30) + 5;
+    } else {
+      targetValue = currentBase;
+    }
+
+    if (currentBase === 16) {
+      maxRoundTime = parseInt(
+        document.getElementById("overlay-time-select").value,
+      );
+      isHintEnabled =
+        document.getElementById("overlay-hint-select").value === "on";
+    } else if (currentBase === 4 || currentBase === 2) {
+      maxRoundTime = 60;
+      isHintEnabled =
+        document.getElementById("overlay-hint-select").value === "on";
+    } else {
+      maxRoundTime = 60;
+      isHintEnabled = false;
+    }
   }
 
-  if (currentBase === 16) {
-    maxRoundTime = parseInt(
-      document.getElementById("overlay-time-select").value,
-    );
-    isHintEnabled =
-      document.getElementById("overlay-hint-select").value === "on";
-  } else if (currentBase === 4 || currentBase === 2) {
-    maxRoundTime = 60;
-    isHintEnabled =
-      document.getElementById("overlay-hint-select").value === "on";
-  } else {
-    maxRoundTime = 60;
-    isHintEnabled = false;
-  }
+  document.getElementById("game-base-select").value = currentBase;
   timeLeft = maxRoundTime;
+
+  // ゲーム画面上のSCORE表示枠をモードに応じて最適化
+  const scoreBox = document.getElementById("game-score-box");
+  if (gameMode === "normal") {
+    scoreBox.innerHTML = `SCORE: <span id="score-val" class="score-val">${score}</span> / 10`;
+  } else {
+    scoreBox.innerHTML = `SOLVED: <span id="score-val" class="score-val">${score}</span> 問`;
+  }
 
   updateTargetDisplayString();
 
@@ -171,19 +217,29 @@ function initGameRound() {
 
   renderReferenceTable();
   preGenerateProblem();
-
   startGameRound();
 }
 
 function updateTargetDisplayString() {
-  let targetText = targetValue.toString(currentBase).toUpperCase();
-  let modeExText = "";
+  let modeLabelText = "";
+  if (gameMode === "normal") modeLabelText = "通常モード";
+  if (gameMode === "timeattack") modeLabelText = "タイムアタック";
+  if (gameMode === "survival") modeLabelText = "サバイバル";
+  if (gameMode === "mix") modeLabelText = "進数ごちゃまぜ";
+
+  let modeExText = ` [${modeLabelText}]`;
   if (modeFraction) modeExText += " [分数解禁]";
   if (modeTargetShift) modeExText += " [目標変動]";
   if (modeBlind) modeExText += " [ブラインド]";
 
-  document.getElementById("target-info").innerText =
-    `${currentBase}進数目標: 『 ${targetText} 』(10進数: ${targetValue}) を作れ！${modeExText}`;
+  if (gameMode === "mix") {
+    document.getElementById("target-info").innerText =
+      `目標値: 『 10 』(10進数) を作れ！${modeExText}`;
+  } else {
+    let targetText = targetValue.toString(currentBase).toUpperCase();
+    document.getElementById("target-info").innerText =
+      `${currentBase}進数目標: 『 ${targetText} 』(10進数: ${targetValue}) を作れ！${modeExText}`;
+  }
 }
 
 function startGameRound() {
@@ -195,12 +251,8 @@ function startGameRound() {
 }
 
 function overlayMainAction() {
-  if (gameState === "SETUP") {
-    initGameRound();
-  } else if (gameState === "CLEAR") {
-    showHomeMenu();
-  } else if (gameState === "PAUSED") {
-    togglePause();
+  if (gameState === "SETUP" || gameState === "CLEAR") {
+    showHomeMenu(); // 必ず一度メニューリセットを挟んで安全に開始
   }
 }
 
@@ -220,12 +272,15 @@ function togglePause() {
     document.getElementById("overlay-title").innerHTML = "⏸️ PAUSE";
     document.getElementById("overlay-msg").innerHTML =
       "ゲームを一時停止しています";
-    document.getElementById("overlay-base-select").style.display = "none";
+
+    document.getElementById("menu-section-base").style.display = "none";
     document.getElementById("hex-time-container").style.display = "none";
     document.getElementById("hint-select-container").style.display = "none";
+    document.getElementById("overlay-mode-select").style.display = "none";
     document.querySelector(".btn-toggle-options").style.display = "none";
     document.getElementById("difficulty-options-panel").style.display = "none";
-    document.getElementById("overlay-btn-main").innerText = "ゲームを再開する";
+
+    document.getElementById("overlay-btn-main").style.display = "none"; // 再開は上部トグルで行うためメインボタンは隠す
     document.getElementById("overlay-btn-sub").style.display = "block";
     document.getElementById("overlay-btn-sub").innerText = "中断してメニューへ";
 
@@ -233,17 +288,15 @@ function togglePause() {
   } else {
     gameState = "PLAYING";
     document.getElementById("game-overlay").style.display = "none";
-    document.querySelector(".btn-toggle-options").style.display =
-      "inline-block";
     timerInterval = setInterval(timerTick, 1000);
   }
 }
 
 function startTimer() {
   if (timerInterval) clearInterval(timerInterval);
-  timeLeft = maxRoundTime;
   document.getElementById("timer-val").innerText = timeLeft;
-  document.getElementById("gauge-bar").style.width = "100%";
+  document.getElementById("gauge-bar").style.width =
+    (timeLeft / maxRoundTime) * 100 + "%";
   timerInterval = setInterval(timerTick, 1000);
 }
 
@@ -273,10 +326,11 @@ function giveUpAndShowAnswer() {
 }
 
 function handleNextStageClick() {
-  if (score >= 10) {
+  if (gameMode === "normal" && score >= 10) {
     showGameClearFinal();
   } else {
-    if (modeTargetShift) {
+    // タイムアタックやサバイバルの追加ロジックは次のステップでここに組み込みます
+    if (modeTargetShift && gameMode !== "mix") {
       if (currentBase === 4) targetValue = Math.floor(Math.random() * 8) + 2;
       else if (currentBase === 8)
         targetValue = Math.floor(Math.random() * 15) + 3;
@@ -297,15 +351,19 @@ function showAnswerAndNextButton(titlePrefix) {
     .replace(/\*/g, " × ")
     .replace(/\//g, " ÷ ");
 
+  let displayTargetStr =
+    gameMode === "mix" ? "10" : toCustomBaseString(targetValue);
+
   resultBox.innerHTML = `
         <div>
             <span class="fail-text" style="font-weight:bold;">${titlePrefix} 答えの一例：</span>
-            <span style="color:#ff9f1c; font-size:18px; font-weight:bold; letter-spacing:1px;">${cleanAns} = ${toCustomBaseString(targetValue)}</span>
+            <span style="color:#ff9f1c; font-size:18px; font-weight:bold; letter-spacing:1px;">${cleanAns} = ${displayTargetStr}</span>
         </div>
         <button class="btn-next-stage" onclick="handleNextStageClick()">次の問題へ ➔</button>
     `;
 }
 
+// --- 🧮 計算式・入力ディスプレイ制御系 ---
 function updateFormulaDisplay() {
   const formulaBox = document.getElementById("formula-box");
   const resultBox = document.getElementById("result-box");
@@ -324,13 +382,7 @@ function updateFormulaDisplay() {
         item.text === "*" ? "×" : item.text === "/" ? "÷" : item.text;
       displayText += displayChar + " ";
     });
-    if (blindCardIndex !== -1) {
-      let blindText = toCustomBaseString(problemNumbers[blindCardIndex]);
-      let regex = new RegExp(blindText, "g");
-      formulaBox.innerText = displayText.replace(regex, "？");
-    } else {
-      formulaBox.innerText = displayText;
-    }
+    formulaBox.innerText = displayText.replace(/\d+|[A-F]+/g, "？");
     resultBox.innerText =
       "計算結果: ？？ (カードを2枚以上組み合わせてください)";
     return;
@@ -348,8 +400,15 @@ function updateFormulaDisplay() {
   });
 
   if (modeBlind && blindCardIndex !== -1) {
-    let blindText = toCustomBaseString(problemNumbers[blindCardIndex]);
-    let regex = new RegExp(blindText, "g");
+    // ブラインド時、伏せ対象のカード表記文字を「？」にマスク
+    let targetText =
+      gameMode === "mix"
+        ? toBaseString(
+            problemNumbers[blindCardIndex].val,
+            problemNumbers[blindCardIndex].base,
+          )
+        : toCustomBaseString(problemNumbers[blindCardIndex]);
+    let regex = new RegExp(targetText, "g");
     formulaBox.innerText = displayText.replace(regex, "？");
   } else {
     formulaBox.innerText = displayText;
@@ -363,9 +422,13 @@ function updateFormulaDisplay() {
     if (res === undefined || isNaN(res) || !isFinite(res)) {
       resultBox.innerText = "計算結果: 数式が不完全です";
     } else {
-      let displayRes = Number.isInteger(res)
-        ? toCustomBaseString(res)
-        : res.toFixed(2) + " (小数)";
+      // 表示用の進数変換（ごちゃまぜモード時は結果を常にわかりやすく10進数表記にする）
+      let displayRes =
+        gameMode === "mix"
+          ? res.toFixed(2).replace(".00", "")
+          : Number.isInteger(res)
+            ? toCustomBaseString(res)
+            : res.toFixed(2) + " (小数)";
       resultBox.innerText = `計算結果: ${displayRes}`;
 
       let allCardsUsed = usedCardIndices.length === 4;
@@ -376,7 +439,7 @@ function updateFormulaDisplay() {
         score++;
         document.getElementById("score-val").innerText = score;
 
-        if (score >= 10) {
+        if (gameMode === "normal" && score >= 10) {
           resultBox.innerHTML = `
                         <span class="success-text">🎉 正解！ [10 / 10] 達成！</span>
                         <button class="btn-next-stage" onclick="handleNextStageClick()">結果を見る ➔</button>
@@ -421,12 +484,18 @@ function pressCard(idx) {
   )
     return;
 
-  let numValue = problemNumbers[idx];
+  let numValue =
+    gameMode === "mix" ? problemNumbers[idx].val : problemNumbers[idx];
+  let displayText =
+    gameMode === "mix"
+      ? toBaseString(problemNumbers[idx].val, problemNumbers[idx].base)
+      : toCustomBaseString(numValue);
+
   currentFormula.push({
     type: "num",
     val: numValue,
     idx: idx,
-    text: toCustomBaseString(numValue),
+    text: displayText,
   });
   usedCardIndices.push(idx);
   document.getElementById(`card-${idx}`).classList.add("used");
@@ -456,19 +525,15 @@ function popFormula() {
   updateFormulaDisplay();
 }
 
-function toCustomBaseString(num) {
-  if (num < 0) return "-" + toCustomBaseString(Math.abs(num));
-  if (currentBase === 2) {
-    let s = num.toString(2);
-    return s.length < 2 ? "0" + s : s;
-  }
-  if (currentBase === 4) {
-    let s = num.toString(4);
-    return s.length < 2 ? "0" + s : s;
-  }
-  return num.toString(currentBase).toUpperCase();
+// 汎用進数変換用ヘルパー
+function toBaseString(num, base) {
+  if (num < 0) return "-" + toBaseString(Math.abs(num), base);
+  let s = num.toString(base);
+  if ((base === 2 || base === 4) && s.length < 2) s = "0" + s;
+  return s.toUpperCase();
 }
 
+// --- 🚀 高速数学検証エンジン ---
 function calcMath(a, b, opIndex) {
   if (opIndex === 0) return a + b;
   if (opIndex === 1) return a - b;
@@ -522,11 +587,19 @@ function checkIntRoute(p, o1, o2, o3, treeType) {
 }
 
 const opStrs = ["+", "-", "*", "/"];
-function buildFormulaString(p, o1, o2, o3, treeType) {
-  let A = toCustomBaseString(p[0]);
-  let B = toCustomBaseString(p[1]);
-  let C = toCustomBaseString(p[2]);
-  let D = toCustomBaseString(p[3]);
+function buildFormulaString(p, o1, o2, o3, treeType, customBases = null) {
+  let A = customBases
+    ? toBaseString(p[0], customBases[0])
+    : toCustomBaseString(p[0]);
+  let B = customBases
+    ? toBaseString(p[1], customBases[1])
+    : toCustomBaseString(p[1]);
+  let C = customBases
+    ? toBaseString(p[2], customBases[2])
+    : toCustomBaseString(p[2]);
+  let D = customBases
+    ? toBaseString(p[3], customBases[3])
+    : toCustomBaseString(p[3]);
   let op1 = opStrs[o1],
     op2 = opStrs[o2],
     op3 = opStrs[o3];
@@ -538,13 +611,27 @@ function buildFormulaString(p, o1, o2, o3, treeType) {
   if (treeType === 4) return `(${A})${op1}((${B})${op2}((${C})${op3}(${D})))`;
 }
 
-function fastSolve(nums, target, strictFractionCheck = false) {
-  let permutations = permute(nums);
+function fastSolve(
+  nums,
+  target,
+  strictFractionCheck = false,
+  customBases = null,
+) {
+  // numsの要素にインデックス情報を持たせて順列を生成し、customBases(進数情報)も一緒に正しく並び替える
+  let indexedNums = nums.map((v, i) => ({ val: v, origIdx: i }));
+  let permutations = permute(indexedNums);
+
   let hasInt = false;
   let hasFrac = false;
   let fracPattern = null;
 
-  for (let p of permutations) {
+  for (let pObj of permutations) {
+    let p = pObj.map((item) => item.val);
+    // 並び替えられた数字に対応する進数情報の配列を生成
+    let permBases = customBases
+      ? pObj.map((item) => customBases[item.origIdx])
+      : null;
+
     for (let i = 0; i < 4; i++) {
       for (let j = 0; j < 4; j++) {
         for (let k = 0; k < 4; k++) {
@@ -556,9 +643,9 @@ function fastSolve(nums, target, strictFractionCheck = false) {
           let vals = [
             calcMath(calcMath(a, b, i), calcMath(c, d, k), j),
             calcMath(calcMath(calcMath(a, b, i), c, j), d, k),
-            calcMath(calcMath(a, calcMath(b, c, j), i), d, k),
             calcMath(a, calcMath(calcMath(b, c, j), d, k), i),
             calcMath(a, calcMath(b, calcMath(c, d, k), j), i),
+            calcMath(calcMath(a, calcMath(b, c, j), i), d, k),
           ];
 
           for (let t = 0; t < 5; t++) {
@@ -568,12 +655,19 @@ function fastSolve(nums, target, strictFractionCheck = false) {
               if (isIntRoute) {
                 hasInt = true;
                 if (!strictFractionCheck) {
-                  currentAnswerFormula = buildFormulaString(p, i, j, k, t);
+                  currentAnswerFormula = buildFormulaString(
+                    p,
+                    i,
+                    j,
+                    k,
+                    t,
+                    permBases,
+                  );
                   return true;
                 }
               } else {
                 hasFrac = true;
-                fracPattern = { p, i, j, k, t };
+                fracPattern = { p, i, j, k, t, permBases };
               }
             }
           }
@@ -589,6 +683,7 @@ function fastSolve(nums, target, strictFractionCheck = false) {
       fracPattern.j,
       fracPattern.k,
       fracPattern.t,
+      fracPattern.permBases,
     );
     return true;
   }
@@ -596,113 +691,133 @@ function fastSolve(nums, target, strictFractionCheck = false) {
   return false;
 }
 
-function isProblemRepeated(newNums) {
-  let sortedNew = [...newNums].sort((a, b) => a - b).join(",");
-  for (let past of pastProblemsHistory) {
-    if (past === sortedNew) return true;
-  }
-  return false;
-}
-
+// --- 🎲 クイズ問題オート生成モジュール ---
 function preGenerateProblem() {
   let maxAttempts = modeFraction ? 5000 : 2000;
-  let nums = [];
   let found = false;
 
   blindCardIndex = modeBlind ? Math.floor(Math.random() * 4) : -1;
 
-  let maxHistorySize = 3;
-  if (currentBase === 4) maxHistorySize = 1;
-  if (currentBase === 2) maxHistorySize = 0;
-
   for (let i = 0; i < maxAttempts; i++) {
-    nums = [];
+    let nums = [];
+    let bases = [];
+
+    // 4枚のカードの「10進数の値」および「個別の進数タイプ」の決定
     for (let j = 0; j < 4; j++) {
-      if (currentBase === 2) nums.push(Math.floor(Math.random() * 4));
-      else if (currentBase === 4) nums.push(Math.floor(Math.random() * 16));
-      else {
-        let val = Math.floor(Math.random() * (currentBase - 1)) + 1;
-        if (Math.random() < 0.08) val = 0;
-        nums.push(val);
+      let cardBase = currentBase;
+      if (gameMode === "mix") {
+        // 進数ミックス時は、2, 4, 8, 10, 16進数からカードごとに完全ランダム抽選
+        const basePool = [2, 4, 8, 10, 16];
+        cardBase = basePool[Math.floor(Math.random() * basePool.length)];
       }
+      bases.push(cardBase);
+
+      let val = 0;
+      if (cardBase === 2) val = Math.floor(Math.random() * 4);
+      else if (cardBase === 4) val = Math.floor(Math.random() * 16);
+      else {
+        val = Math.floor(Math.random() * (cardBase - 1)) + 1;
+        if (Math.random() < 0.08) val = 0;
+      }
+      nums.push(val);
     }
 
     if (isProblemRepeated(nums) && i < 100) continue;
 
-    if (fastSolve(nums, targetValue, modeFraction)) {
-      problemNumbers = nums;
+    // 高速エンジンによる解の検証
+    if (
+      fastSolve(
+        nums,
+        targetValue,
+        modeFraction,
+        gameMode === "mix" ? bases : null,
+      )
+    ) {
+      if (gameMode === "mix") {
+        problemNumbers = nums.map((v, idx) => ({ val: v, base: bases[idx] }));
+      } else {
+        problemNumbers = nums;
+      }
       found = true;
       break;
     }
   }
 
-  if (!found && modeFraction) {
-    for (let i = 0; i < 1000; i++) {
-      nums = [];
-      for (let j = 0; j < 4; j++) {
-        if (currentBase === 2) nums.push(Math.floor(Math.random() * 4));
-        else if (currentBase === 4) nums.push(Math.floor(Math.random() * 16));
-        else {
-          let val = Math.floor(Math.random() * (currentBase - 1)) + 1;
-          if (Math.random() < 0.08) val = 0;
-          nums.push(val);
-        }
-      }
-      if (fastSolve(nums, targetValue, false)) {
-        problemNumbers = nums;
-        found = true;
-        break;
-      }
+  // 万が一問題が見つからなかった場合の緊急用セーフティデータ
+  if (!found) {
+    if (gameMode === "mix") {
+      problemNumbers = [
+        { val: 2, base: 10 },
+        { val: 3, base: 16 },
+        { val: 5, base: 8 },
+        { val: 0, base: 2 },
+      ];
+      currentAnswerFormula = "((2*5)+3)-0";
+    } else {
+      if (currentBase === 16) problemNumbers = [2, 4, 8, 2];
+      else if (currentBase === 10) problemNumbers = [2, 3, 5, 0];
+      else if (currentBase === 8) problemNumbers = [2, 2, 2, 2];
+      else if (currentBase === 4) problemNumbers = [1, 1, 1, 1];
+      else problemNumbers = [1, 1, 0, 0];
+      fastSolve(problemNumbers, targetValue, false);
     }
   }
 
-  if (!found) {
-    if (currentBase === 16) problemNumbers = [2, 4, 8, 2];
-    else if (currentBase === 10) problemNumbers = [2, 3, 5, 0];
-    else if (currentBase === 8) problemNumbers = [2, 2, 2, 2];
-    else if (currentBase === 4) problemNumbers = [1, 1, 1, 1];
-    else problemNumbers = [1, 1, 0, 0];
-    fastSolve(problemNumbers, targetValue, false);
-  }
-
-  if (maxHistorySize > 0) {
-    pastProblemsHistory.push(
-      [...problemNumbers].sort((a, b) => a - b).join(","),
-    );
-    if (pastProblemsHistory.length > maxHistorySize)
-      pastProblemsHistory.shift();
-  }
+  // 履歴登録
+  let simpleNums =
+    gameMode === "mix"
+      ? problemNumbers.map((item) => item.val)
+      : problemNumbers;
+  pastProblemsHistory.push([...simpleNums].sort((a, b) => a - b).join(","));
+  if (pastProblemsHistory.length > 3) pastProblemsHistory.shift();
 }
 
+// --- 🃏 カードレンダリングモジュール ---
 function renderCards() {
   const container = document.getElementById("card-container");
   container.innerHTML = "";
-  problemNumbers.forEach((num, idx) => {
+
+  problemNumbers.forEach((item, idx) => {
     const card = document.createElement("div");
     card.className = "card";
     card.id = `card-${idx}`;
 
+    let isBlindTarget = modeBlind && idx === blindCardIndex;
+
+    // 進数ミックスモード時専用の小さな「進数バッジ」をカード上部に追加
+    if (gameMode === "mix") {
+      const baseTag = document.createElement("div");
+      baseTag.className = "card-base-tag";
+      baseTag.innerText = `${item.base}進数`;
+      card.appendChild(baseTag);
+    }
+
     const mainSpan = document.createElement("span");
     mainSpan.className = "card-main-text";
 
-    if (modeBlind && idx === blindCardIndex) {
+    if (isBlindTarget) {
       mainSpan.innerText = "？";
     } else {
-      mainSpan.innerText = toCustomBaseString(num);
+      mainSpan.innerText =
+        gameMode === "mix"
+          ? toBaseString(item.val, item.base)
+          : toCustomBaseString(item);
     }
     card.appendChild(mainSpan);
 
-    if (
-      (currentBase === 16 || currentBase === 4 || currentBase === 2) &&
-      isHintEnabled
-    ) {
+    // 10進数ヒント文字の追加
+    let shouldShowHint =
+      isHintEnabled &&
+      (currentBase === 16 ||
+        currentBase === 4 ||
+        currentBase === 2 ||
+        gameMode === "mix");
+    if (shouldShowHint) {
       const hintSpan = document.createElement("span");
       hintSpan.className = "card-hint-text";
-      if (modeBlind && idx === blindCardIndex) {
-        hintSpan.innerText = "(??)";
-      } else {
-        hintSpan.innerText = `(${num})`;
-      }
+      hintSpan.innerText = isBlindTarget
+        ? "(??)"
+        : `(${gameMode === "mix" ? item.val : item})`;
       card.appendChild(hintSpan);
     }
 
@@ -711,6 +826,7 @@ function renderCards() {
   });
 }
 
+// (以下、renderDummyCards, showGameClearFinal, renderReferenceTable, permute は前回の安定したクリーンな記述をそのまま引き継いで整理しています)
 function renderDummyCards() {
   const container = document.getElementById("card-container");
   container.innerHTML = "";
@@ -734,12 +850,12 @@ function showGameClearFinal() {
   document.getElementById("overlay-msg").innerHTML =
     "素晴らしい！見事10ポイント獲得しました！";
 
-  // 【バグ修正】クリア画面に関係のない選択肢（10進数ヒント、制限時間など）を確実にすべて非表示化
   document.getElementById("overlay-base-select").style.display = "none";
   document.getElementById("hex-time-container").style.display = "none";
-  document.getElementById("hint-select-container").style.display = "none"; // ★ヒント選択を隠す
+  document.getElementById("hint-select-container").style.display = "none";
+  document.getElementById("menu-section-base").style.display = "none";
+  document.getElementById("overlay-mode-select").style.display = "none";
 
-  // メインボタンは非表示、サブボタンを「ホーム画面に戻る」にする
   document.getElementById("overlay-btn-main").style.display = "none";
   document.getElementById("overlay-btn-sub").style.display = "block";
   document.getElementById("overlay-btn-sub").innerText = "🏠 ホーム画面に戻る";
@@ -754,6 +870,10 @@ function showGameClearFinal() {
 function renderReferenceTable() {
   const refTable = document.getElementById("reference-table");
   refTable.innerHTML = "";
+  if (gameMode === "mix") {
+    refTable.innerHTML = `<div class="ref-item">目標は 10進数の <b>10</b> 固定！カードごとの進数に注意！</div>`;
+    return;
+  }
   if (currentBase === 16) {
     const hexRefs = [
       { c: "A", v: 10 },

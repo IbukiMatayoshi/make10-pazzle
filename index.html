@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>make10 (イチゼロ) パズル - 完全版</title>
+    <title>make10 (イチゼロ) パズル - 新フロー版</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body class="dark-theme">
@@ -20,28 +20,49 @@
       <div id="game-overlay" class="overlay">
         <div id="overlay-content">
           <h2 id="overlay-title">📢 MAKE10 PUZZLE</h2>
-          <p id="overlay-msg">
-            条件を選んで、<br />ゲームスタートボタンを押してください。
-          </p>
+          <p id="overlay-msg">条件を選んで、ゲームスタート！</p>
 
-          <select
-            id="overlay-base-select"
-            class="overlay-select-box"
-            onchange="handleBaseSelectChange()"
-          >
-            <option value="10" selected>10進数</option>
-            <option value="16">16進数 (目標: 16 [10])</option>
-            <option value="8">8進数 (目標: 8 [10])</option>
-            <option value="4">4進数 (目標: 4 [10])</option>
-            <option value="2">2進数 (目標: 2 [10])</option>
-          </select>
+          <div class="menu-section">
+            <div class="section-label">🎮 ゲームモード：</div>
+            <select
+              id="overlay-mode-select"
+              class="overlay-select-box-main"
+              onchange="handleModeSelectChange()"
+            >
+              <option value="normal" selected>通常 (10問チャレンジ)</option>
+              <option value="timeattack">
+                タイムアタック (時間内の純粋勝負)
+              </option>
+              <option value="survival">
+                連続正解サバイバル (ノーミス終了)
+              </option>
+              <option value="mix">
+                進数ごちゃまぜ (各カードがランダム進数)
+              </option>
+            </select>
+          </div>
+
+          <div class="menu-section" id="menu-section-base">
+            <div class="section-label">🔢 進数設定：</div>
+            <select
+              id="overlay-base-select"
+              class="overlay-select-box"
+              onchange="handleBaseSelectChange()"
+            >
+              <option value="10" selected>10進数</option>
+              <option value="16">16進数 (目標: 16 [10])</option>
+              <option value="8">8進数 (目標: 8 [10])</option>
+              <option value="4">4進数 (目標: 4 [10])</option>
+              <option value="2">2進数 (目標: 2 [10])</option>
+            </select>
+          </div>
 
           <div id="hex-time-container" class="extra-select-container">
-            <div class="select-label">⏳ 制限時間を選択：</div>
+            <div class="select-label">⏳ 1問の制限時間：</div>
             <select
               id="overlay-time-select"
               class="overlay-select-box"
-              style="margin-bottom: 0; border-color: var(--warning-color)"
+              style="border-color: var(--warning-color)"
             >
               <option value="60" selected>1分 (標準)</option>
               <option value="120">2分 (じっくり)</option>
@@ -49,12 +70,12 @@
             </select>
           </div>
 
-          <div id="hint-select-container" class="extra-select-container">
-            <div class="select-label">💡 10進数ヒント表示：</div>
+          <div class="menu-section" id="menu-section-hint">
+            <div class="section-label">💡 10進数ヒント表示：</div>
             <select
               id="overlay-hint-select"
               class="overlay-select-box"
-              style="margin-bottom: 0; border-color: var(--success-color)"
+              style="border-color: var(--success-color)"
             >
               <option value="on" selected>
                 あり (初級・カードの下に数字表示)
@@ -67,7 +88,7 @@
             class="btn-toggle-options"
             onclick="toggleOptionsVisibility()"
           >
-            🛠️ 高度な設定を表示
+            🛠️ 特殊ルールを表示
           </button>
 
           <div
@@ -82,7 +103,7 @@
                 width: 100%;
               "
             >
-              🔥 特殊ルール：
+              🔥 特殊ルール効果：
             </div>
 
             <label class="checkbox-label">
@@ -128,7 +149,7 @@
       <h1>make10 (イチゼロ) パズル</h1>
 
       <div class="status-container">
-        <div class="score-box">
+        <div class="score-box" id="game-score-box">
           SCORE: <span id="score-val" class="score-val">0</span> / 10
         </div>
         <div class="timer-box">
@@ -149,6 +170,7 @@
           <option value="8">8進数</option>
           <option value="4">4進数</option>
           <option value="2">2進数</option>
+          <option value="mix">進数ごちゃまぜ</option>
         </select>
         <button
           id="giveup-btn"
