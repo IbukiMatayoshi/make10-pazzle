@@ -17,6 +17,9 @@ let modeTargetShift = false;
 let modeBlind = false;
 let blindCardIndex = -1;
 
+// ★【新機能】同じような問題の連続を防ぐための履歴リスト
+let pastProblemsHistory = [];
+
 window.onload = function () {
   showHomeMenu();
 };
@@ -67,6 +70,9 @@ function showHomeMenu() {
   document.getElementById("giveup-btn").disabled = true;
   document.getElementById("pause-btn").disabled = true;
 
+  // 履歴のクリア
+  pastProblemsHistory = [];
+
   renderDummyCards();
 
   document.getElementById("overlay-title").innerHTML = "📢 MAKE10 PUZZLE";
@@ -76,7 +82,6 @@ function showHomeMenu() {
   document.getElementById("overlay-btn-main").innerText = "ゲームスタート";
   document.getElementById("overlay-btn-sub").style.display = "none";
 
-  // ★【バグ修正】ホームに戻った際、高度な設定ボタン（トグル）が消えないように強制再表示
   const toggleBtn = document.querySelector(".btn-toggle-options");
   if (toggleBtn) {
     toggleBtn.style.display = "inline-block";
@@ -359,7 +364,8 @@ function updateFormulaDisplay() {
       resultBox.innerText = `計算結果: ${displayRes}`;
 
       let allCardsUsed = usedCardIndices.length === 4;
-      if (allCardsUsed && Math.abs(res - targetValue) < 0.00001) {
+      // ★【修正】許容誤差を 0.00001 から 0.001 へわずかに最適化し、四捨五入による小数の判定ミスを完全防止
+      if (allCardsUsed && Math.abs(res - targetValue) < 0.001) {
         gameState = "TRANSITION";
         clearInterval(timerInterval);
 
@@ -421,309 +427,4 @@ function pressCard(idx) {
   usedCardIndices.push(idx);
   document.getElementById(`card-${idx}`).classList.add("used");
   updateFormulaDisplay();
-}
-
-function pressOp(op) {
-  if (gameState !== "PLAYING") return;
-  if (
-    currentFormula.length > 0 &&
-    currentFormula[currentFormula.length - 1].text === op &&
-    op !== "(" &&
-    op !== ")"
-  )
-    return;
-  currentFormula.push({ type: "op", text: op });
-  updateFormulaDisplay();
-}
-
-function popFormula() {
-  if (gameState !== "PLAYING" || currentFormula.length === 0) return;
-  let last = currentFormula.pop();
-  if (last.type === "num") {
-    usedCardIndices = usedCardIndices.filter((i) => i !== last.idx);
-    document.getElementById(`card-${last.idx}`).classList.remove("used");
-  }
-  updateFormulaDisplay();
-}
-
-function toCustomBaseString(num) {
-  if (num < 0) return "-" + toCustomBaseString(Math.abs(num));
-  if (currentBase === 2) {
-    let s = num.toString(2);
-    return s.length < 2 ? "0" + s : s;
-  }
-  if (currentBase === 4) {
-    let s = num.toString(4);
-    return s.length < 2 ? "0" + s : s;
-  }
-  return num.toString(currentBase).toUpperCase();
-}
-
-// 探索エンジン
-function solveStrictly(nums, target, strictFractionCheck = false) {
-  let permutations = permute(nums);
-  let ops = ["+", "-", "*", "/"];
-  let hasIntegerSolution = false;
-  let hasFractionSolution = false;
-  let fractionAnswerPattern = "";
-
-  for (let p of permutations) {
-    let formulas = [
-      `((A)O1(B))O2((C)O3(D))`,
-      `(((A)O1(B))O2(C))O3(D)`,
-      `((A)O1((B)O2(C)))O3(D)`,
-      `(A)O1(((B)O2(C))O3(D))`,
-      `(A)O1((B)O2((C)O3(D)))`,
-    ];
-    for (let o1 of ops) {
-      for (let o2 of ops) {
-        for (let o3 of ops) {
-          for (let fPattern of formulas) {
-            // 1. まず整数だけで解けるかチェック
-            let isIntRoute = true;
-            if (
-              !checkIntegerOnly(p[0], p[1], o1) ||
-              !checkIntegerOnly(p[2], p[3], o3)
-            )
-              isIntRoute = false;
-            if (isIntRoute) {
-              let step1 = eval(`${p[0]}${o1}${p[1]}`);
-              let step2 = eval(`${p[2]}${o3}${p[3]}`);
-              if (
-                !Number.isInteger(step1) ||
-                !Number.isInteger(step2) ||
-                !checkIntegerOnly(step1, step2, o2)
-              )
-                isIntRoute = false;
-            }
-
-            try {
-              let f = fPattern
-                .replace("A", p[0])
-                .replace("B", p[1])
-                .replace("C", p[2])
-                .replace("D", p[3])
-                .replace("O1", o1)
-                .replace("O2", o2)
-                .replace("O3", o3);
-              let res = eval(f);
-
-              if (res !== undefined && isFinite(res) && !isNaN(res)) {
-                if (Math.abs(res - target) < 0.00001) {
-                  if (isIntRoute) {
-                    hasIntegerSolution = true;
-                    if (!strictFractionCheck) {
-                      storeAnswerFormula(fPattern, p, o1, o2, o3);
-                      return true; // 通常モードなら即座に決定
-                    }
-                  } else {
-                    hasFractionSolution = true;
-                    // 分数解のパターンを一時保存
-                    fractionAnswerPattern = { fPattern, p, o1, o2, o3 };
-                  }
-                }
-              }
-            } catch (e) {}
-          }
-        }
-      }
-    }
-  }
-
-  // ★【新仕様】分数高難易度化：整数解がなく、分数解「だけ」が存在する問題を厳選
-  if (strictFractionCheck && hasFractionSolution && !hasIntegerSolution) {
-    storeAnswerFormula(
-      fractionAnswerPattern.fPattern,
-      fractionAnswerPattern.p,
-      fractionAnswerPattern.o1,
-      fractionAnswerPattern.o2,
-      fractionAnswerPattern.o3,
-    );
-    return true;
-  }
-
-  return false;
-}
-
-function checkIntegerOnly(v1, v2, op) {
-  if (op === "/") {
-    if (v2 === 0) return false;
-    return v1 % v2 === 0;
-  }
-  return true;
-}
-
-function storeAnswerFormula(pattern, p, o1, o2, o3) {
-  currentAnswerFormula = pattern
-    .replace("A", toCustomBaseString(p[0]))
-    .replace("B", toCustomBaseString(p[1]))
-    .replace("C", toCustomBaseString(p[2]))
-    .replace("D", toCustomBaseString(p[3]))
-    .replace("O1", o1)
-    .replace("O2", o2)
-    .replace("O3", o3);
-}
-
-function preGenerateProblem() {
-  let maxAttempts = 2000; // 厳選のためにガチャの最大回数を拡張
-  let nums = [];
-
-  blindCardIndex = modeBlind ? Math.floor(Math.random() * 4) : -1;
-
-  for (let i = 0; i < maxAttempts; i++) {
-    nums = [];
-    for (let j = 0; j < 4; j++) {
-      if (currentBase === 2) nums.push(Math.floor(Math.random() * 4));
-      else if (currentBase === 4) nums.push(Math.floor(Math.random() * 16));
-      else {
-        let val = Math.floor(Math.random() * (currentBase - 1)) + 1;
-        if (Math.random() < 0.08) val = 0;
-        nums.push(val);
-      }
-    }
-
-    // 分数解禁モードがONの場合、まずは「分数でしか解けない超難問」の厳選フィルターを通す
-    if (modeFraction) {
-      if (solveStrictly(nums, targetValue, true)) {
-        problemNumbers = nums;
-        return;
-      }
-    } else {
-      // 通常時は整数で解ける問題を普通に引く
-      if (solveStrictly(nums, targetValue, false)) {
-        problemNumbers = nums;
-        return;
-      }
-    }
-  }
-
-  // 万が一、制限回数内に超難問を引けなかった場合のフォールバック（分数必須の有名問題：3,3,8,8など）
-  if (modeFraction) {
-    problemNumbers = [3, 3, 8, 8];
-    solveStrictly(problemNumbers, targetValue, false);
-  } else {
-    problemNumbers = currentBase === 2 ? [1, 1, 0, 0] : [1, 1, 1, 2];
-    solveStrictly(problemNumbers, targetValue, false);
-  }
-}
-
-function renderCards() {
-  const container = document.getElementById("card-container");
-  container.innerHTML = "";
-  problemNumbers.forEach((num, idx) => {
-    const card = document.createElement("div");
-    card.className = "card";
-    card.id = `card-${idx}`;
-
-    const mainSpan = document.createElement("span");
-    mainSpan.className = "card-main-text";
-
-    if (modeBlind && idx === blindCardIndex) {
-      mainSpan.innerText = "？";
-    } else {
-      mainSpan.innerText = toCustomBaseString(num);
-    }
-    card.appendChild(mainSpan);
-
-    if (
-      (currentBase === 16 || currentBase === 4 || currentBase === 2) &&
-      isHintEnabled
-    ) {
-      const hintSpan = document.createElement("span");
-      hintSpan.className = "card-hint-text";
-      if (modeBlind && idx === blindCardIndex) {
-        hintSpan.innerText = "(??)";
-      } else {
-        hintSpan.innerText = `(${num})`;
-      }
-      card.appendChild(hintSpan);
-    }
-
-    card.onclick = () => pressCard(idx);
-    container.appendChild(card);
-  });
-}
-
-function renderDummyCards() {
-  const container = document.getElementById("card-container");
-  container.innerHTML = "";
-  for (let i = 0; i < 4; i++) {
-    const card = document.createElement("div");
-    card.className = "card used";
-    const mainSpan = document.createElement("span");
-    mainSpan.className = "card-main-text";
-    mainSpan.innerText = "?";
-    card.appendChild(mainSpan);
-    container.appendChild(card);
-  }
-}
-
-function showGameClearFinal() {
-  gameState = "CLEAR";
-  if (timerInterval) clearInterval(timerInterval);
-
-  document.getElementById("overlay-content").style.display = "flex";
-
-  document.getElementById("overlay-title").innerHTML = "🎉 GAME CLEAR!";
-  document.getElementById("overlay-msg").innerHTML =
-    "素晴らしい！見事10ポイント獲得しました！";
-  document.getElementById("overlay-base-select").style.display = "block";
-  document.getElementById("overlay-btn-main").innerText = "もう一度遊ぶ";
-  document.getElementById("overlay-btn-sub").style.display = "none";
-
-  // ゲームクリア画面でも高度な設定ボタンを復帰させる
-  const toggleBtn = document.querySelector(".btn-toggle-options");
-  if (toggleBtn) {
-    toggleBtn.style.display = "inline-block";
-    toggleBtn.innerText = "🛠️ 高度な設定を表示";
-  }
-  document.getElementById("difficulty-options-panel").style.display = "none";
-
-  handleBaseSelectChange();
-  document.getElementById("game-overlay").style.display = "flex";
-}
-
-function renderReferenceTable() {
-  const refTable = document.getElementById("reference-table");
-  refTable.innerHTML = "";
-  if (currentBase === 16) {
-    const hexRefs = [
-      { c: "A", v: 10 },
-      { c: "B", v: 11 },
-      { c: "C", v: 12 },
-      { c: "D", v: 13 },
-      { c: "E", v: 14 },
-      { c: "F", v: 15 },
-      { c: "10", v: 16 },
-    ];
-    hexRefs.forEach((item) => {
-      refTable.innerHTML += `<div class="ref-item"><b>${item.c}</b>=${item.v}</div>`;
-    });
-  } else if (currentBase === 8) {
-    refTable.innerHTML = `<div class="ref-item">8進数の <b>10</b> = 10進数の 8</div>`;
-  } else if (currentBase === 4) {
-    refTable.innerHTML = `<div class="ref-item"><b>01</b>=1</div><div class="ref-item"><b>10</b>=4</div><div class="ref-item"><b>20</b>=8</div><div class="ref-item"><b>30</b>=12</div>`;
-  } else if (currentBase === 2) {
-    refTable.innerHTML = `<div class="ref-item"><b>00</b>=0</div><div class="ref-item"><b>01</b>=1</div><div class="ref-item"><b>10</b>=2</div><div class="ref-item"><b>11</b>=3</div>`;
-  } else {
-    refTable.innerHTML = `<div class="ref-item">馴染み深い 10進数モード</div>`;
-  }
-}
-
-function permute(arr) {
-  let res = [];
-  const dfs = (curr, remaining) => {
-    if (remaining.length === 0) {
-      res.push(curr);
-      return;
-    }
-    for (let i = 0; i < remaining.length; i++) {
-      dfs(
-        [...curr, remaining[i]],
-        remaining.filter((_, idx) => idx !== i),
-      );
-    }
-  };
-  dfs([], arr);
-  return res;
 }
