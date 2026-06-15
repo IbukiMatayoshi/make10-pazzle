@@ -56,7 +56,6 @@ function showHomeMenu() {
   document.getElementById("game-overlay").style.display = "flex";
   document.getElementById("overlay-content").style.display = "flex";
 
-  // ★【修正】ゲームクリア画面などからホームに戻ったとき、確実にスコアを 0 にリセットする
   score = 0;
   document.getElementById("score-val").innerText = score;
   document.getElementById("timer-val").innerText = "60";
@@ -191,7 +190,11 @@ function startGameRound() {
 }
 
 function overlayMainAction() {
+  // ★【修正】ゲームセットアップ状態、またはゲームクリア（リスタート）状態から始まる場合、確実にスコアを0にリセットして初期化
   if (gameState === "SETUP" || gameState === "CLEAR") {
+    score = 0;
+    document.getElementById("score-val").innerText = score;
+    pastProblemsHistory = []; // 履歴も完全にリフレッシュ
     initGameRound();
   } else if (gameState === "PAUSED") {
     togglePause();
