@@ -56,6 +56,7 @@ function showHomeMenu() {
   document.getElementById("game-overlay").style.display = "flex";
   document.getElementById("overlay-content").style.display = "flex";
 
+  // 一番実績のある「メニューに戻る」タイミングで、確実に各種変数をクリーンアップ
   score = 0;
   document.getElementById("score-val").innerText = score;
   document.getElementById("timer-val").innerText = "60";
@@ -190,19 +191,18 @@ function startGameRound() {
 }
 
 function overlayMainAction() {
-  // ★【修正】ゲームセットアップ状態、またはゲームクリア（リスタート）状態から始まる場合、確実にスコアを0にリセットして初期化
-  if (gameState === "SETUP" || gameState === "CLEAR") {
-    score = 0;
-    document.getElementById("score-val").innerText = score;
-    pastProblemsHistory = []; // 履歴も完全にリフレッシュ
+  if (gameState === "SETUP") {
     initGameRound();
+  } else if (gameState === "CLEAR") {
+    // ★【変更】もし何らかの理由でこのボタンが押された場合も強制的にメニュー初期化を挟む
+    showHomeMenu();
   } else if (gameState === "PAUSED") {
     togglePause();
   }
 }
 
 function overlaySubAction() {
-  if (gameState === "PAUSED") {
+  if (gameState === "PAUSED" || gameState === "CLEAR") {
     showHomeMenu();
   }
 }
@@ -725,20 +725,25 @@ function renderDummyCards() {
 function showGameClearFinal() {
   gameState = "CLEAR";
   if (timerInterval) clearInterval(timerInterval);
+
   document.getElementById("overlay-content").style.display = "flex";
   document.getElementById("overlay-title").innerHTML = "🎉 GAME CLEAR!";
   document.getElementById("overlay-msg").innerHTML =
     "素晴らしい！見事10ポイント獲得しました！";
-  document.getElementById("overlay-base-select").style.display = "block";
-  document.getElementById("overlay-btn-main").innerText = "もう一度遊ぶ";
-  document.getElementById("overlay-btn-sub").style.display = "none";
+
+  // 【仕様変更】誤動作を防ぐため、メインボタン（もう一度遊ぶ）は非表示化
+  document.getElementById("overlay-base-select").style.display = "none";
+  document.getElementById("overlay-btn-main").style.display = "none";
+
+  // サブボタンを「ホーム画面に戻る」として活用
+  document.getElementById("overlay-btn-sub").style.display = "block";
+  document.getElementById("overlay-btn-sub").innerText = "🏠 ホーム画面に戻る";
+
+  // オプションパネル系もすべて非表示化
   const toggleBtn = document.querySelector(".btn-toggle-options");
-  if (toggleBtn) {
-    toggleBtn.style.display = "inline-block";
-    toggleBtn.innerText = "🛠️ 高度な設定を表示";
-  }
+  if (toggleBtn) toggleBtn.style.display = "none";
   document.getElementById("difficulty-options-panel").style.display = "none";
-  handleBaseSelectChange();
+
   document.getElementById("game-overlay").style.display = "flex";
 }
 
