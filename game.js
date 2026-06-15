@@ -562,10 +562,16 @@ function isProblemRepeated(newNums) {
 }
 
 function preGenerateProblem() {
-  let maxAttempts = 1500;
+  let maxAttempts = 200; // 重複探査用の施行回数は安全なサイズに
   let nums = [];
+  let found = false;
 
   blindCardIndex = modeBlind ? Math.floor(Math.random() * 4) : -1;
+
+  // 進数に応じた最大履歴保持数の決定（バリエーションが少ない進数は重複を許容するガード）
+  let maxHistorySize = 3;
+  if (currentBase === 4) maxHistorySize = 1;
+  if (currentBase === 2) maxHistorySize = 0;
 
   for (let i = 0; i < maxAttempts; i++) {
     nums = [];
@@ -579,41 +585,51 @@ function preGenerateProblem() {
       }
     }
 
-    if (isProblemRepeated(nums)) continue;
-
+    // ★【修正のキモ】履歴チェックは「解ける問題が見つかったあと」に判定する安全設計へ
     if (modeFraction) {
       if (solveStrictly(nums, targetValue, true)) {
         problemNumbers = nums;
-        pastProblemsHistory.push([...nums].sort((a, b) => a - b).join(","));
-        if (pastProblemsHistory.length > 3) pastProblemsHistory.shift();
-        return;
+        found = true;
+        // 重複していなければ即座に採用してループを抜ける
+        if (!isProblemRepeated(nums) || i > 50) {
+          // 50回以上見つからなければ重複を許容
+          break;
+        }
       }
     } else {
       if (solveStrictly(nums, targetValue, false)) {
         problemNumbers = nums;
-        pastProblemsHistory.push([...nums].sort((a, b) => a - b).join(","));
-        if (pastProblemsHistory.length > 3) pastProblemsHistory.shift();
-        return;
+        found = true;
+        if (!isProblemRepeated(nums) || i > 50) {
+          break;
+        }
       }
     }
   }
 
-  // ★【バグ根絶】再帰呼び出しを完全撤廃。1500回で見つからなければ、絶対に解ける安全な固定データを1ミリ秒で即時セット
-  if (modeFraction) {
-    // 分数必須の有名問題（10進数基準。進数ごとに自動変換・評価されます）
-    if (currentBase === 16) problemNumbers = [3, 3, 8, 8];
-    else if (currentBase === 4) problemNumbers = [1, 2, 3, 3];
-    else problemNumbers = [3, 3, 8, 8];
-  } else {
-    if (currentBase === 2) problemNumbers = [1, 1, 0, 0];
-    else if (currentBase === 4) problemNumbers = [1, 1, 1, 1];
-    else problemNumbers = [1, 1, 1, targetValue - 3 > 0 ? targetValue - 3 : 1];
+  // もし最大施行回数（200回）回しても見つからなかった場合のフォールバック（緊急用鉄板データ）
+  if (!found) {
+    if (modeFraction) {
+      if (currentBase === 16) problemNumbers = [3, 3, 8, 8];
+      else if (currentBase === 4) problemNumbers = [1, 2, 3, 3];
+      else problemNumbers = [3, 3, 8, 8];
+    } else {
+      if (currentBase === 2) problemNumbers = [1, 1, 0, 0];
+      else if (currentBase === 4) problemNumbers = [1, 1, 1, 1];
+      else
+        problemNumbers = [1, 1, 1, targetValue - 3 > 0 ? targetValue - 3 : 1];
+    }
+    solveStrictly(problemNumbers, targetValue, false);
   }
 
-  // 固定データに対する答えを確定させて安全終了
-  solveStrictly(problemNumbers, targetValue, false);
-  pastProblemsHistory.push([...problemNumbers].sort((a, b) => a - b).join(","));
-  if (pastProblemsHistory.length > 3) pastProblemsHistory.shift();
+  // 今回の問題を履歴に登録
+  if (maxHistorySize > 0) {
+    pastProblemsHistory.push(
+      [...problemNumbers].sort((a, b) => a - b).join(","),
+    );
+    if (pastProblemsHistory.length > maxHistorySize)
+      pastProblemsHistory.shift();
+  }
 }
 
 function renderCards() {
