@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>make10 (イチゼロ) パズル - 完全版</title>
+    <title>make10 (イチゼロ) パズル - 高速演算版</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body class="dark-theme">
@@ -20,7 +20,9 @@
       <div id="game-overlay" class="overlay">
         <div id="overlay-content">
           <h2 id="overlay-title">📢 MAKE10 PUZZLE</h2>
-          <p id="overlay-msg">説明テキスト</p>
+          <p id="overlay-msg">
+            条件を選んで、<br />ゲームスタートボタンを押してください。
+          </p>
 
           <select
             id="overlay-base-select"
@@ -110,14 +112,14 @@
               class="btn-trigger btn-main-trigger"
               onclick="overlayMainAction()"
             >
-              ボタン1
+              ゲームスタート
             </button>
             <button
               id="overlay-btn-sub"
               class="btn-trigger btn-sub-trigger"
               onclick="overlaySubAction()"
             >
-              ボタン2
+              中断してメニューへ
             </button>
           </div>
         </div>

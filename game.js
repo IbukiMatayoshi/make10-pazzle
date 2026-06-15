@@ -17,6 +17,8 @@ let modeTargetShift = false;
 let modeBlind = false;
 let blindCardIndex = -1;
 
+let pastProblemsHistory = [];
+
 window.onload = function () {
   showHomeMenu();
 };
@@ -67,6 +69,8 @@ function showHomeMenu() {
 
   document.getElementById("giveup-btn").disabled = true;
   document.getElementById("pause-btn").disabled = true;
+
+  pastProblemsHistory = [];
 
   renderDummyCards();
 
@@ -291,7 +295,7 @@ function showAnswerAndNextButton(titlePrefix) {
             <span class="fail-text" style="font-weight:bold;">${titlePrefix} 答えの一例：</span>
             <span style="color:#ff9f1c; font-size:18px; font-weight:bold; letter-spacing:1px;">${cleanAns} = ${toCustomBaseString(targetValue)}</span>
         </div>
-        <button class="btn-next-stage" onclick="handleNextStageClick()">Next ➔</button>
+        <button class="btn-next-stage" onclick="handleNextStageClick()">次の問題へ ➔</button>
     `;
 }
 
@@ -358,7 +362,7 @@ function updateFormulaDisplay() {
       resultBox.innerText = `計算結果: ${displayRes}`;
 
       let allCardsUsed = usedCardIndices.length === 4;
-      if (allCardsUsed && Math.abs(res - targetValue) < 0.01) {
+      if (allCardsUsed && Math.abs(res - targetValue) < 0.001) {
         gameState = "TRANSITION";
         clearInterval(timerInterval);
 
@@ -392,9 +396,8 @@ function clearFormulaInternal() {
   document.getElementById("result-box").innerText = "計算結果: -";
 
   problemNumbers.forEach((_, idx) => {
-    const card = document.createElement("div"); // ダミー用
-    const existingCard = document.getElementById(`card-${idx}`);
-    if (existingCard) existingCard.classList.remove("used");
+    const card = document.getElementById(`card-${idx}`);
+    if (card) card.classList.remove("used");
   });
 }
 
@@ -459,81 +462,127 @@ function toCustomBaseString(num) {
   return num.toString(currentBase).toUpperCase();
 }
 
-function solveStrictly(nums, target, strictFractionCheck = false) {
+// 【劇的改善】eval()を完全に排除した超高速・自作数学エンジン
+function calcMath(a, b, opIndex) {
+  if (opIndex === 0) return a + b;
+  if (opIndex === 1) return a - b;
+  if (opIndex === 2) return a * b;
+  if (opIndex === 3) return b === 0 ? NaN : a / b;
+  return NaN;
+}
+
+function isCleanInteger(val) {
+  return Number.isFinite(val) && Math.abs(val % 1) < 0.0001;
+}
+
+function checkIntRoute(p, o1, o2, o3, treeType) {
+  let a = p[0],
+    b = p[1],
+    c = p[2],
+    d = p[3];
+  let step1, step2;
+
+  if (treeType === 0) {
+    step1 = calcMath(a, b, o1);
+    step2 = calcMath(c, d, o3);
+    if (!isCleanInteger(step1) || !isCleanInteger(step2)) return false;
+    return isCleanInteger(calcMath(step1, step2, o2));
+  } else if (treeType === 1) {
+    step1 = calcMath(a, b, o1);
+    if (!isCleanInteger(step1)) return false;
+    step2 = calcMath(step1, c, o2);
+    if (!isCleanInteger(step2)) return false;
+    return isCleanInteger(calcMath(step2, d, o3));
+  } else if (treeType === 2) {
+    step1 = calcMath(b, c, o2);
+    if (!isCleanInteger(step1)) return false;
+    step2 = calcMath(a, step1, o1);
+    if (!isCleanInteger(step2)) return false;
+    return isCleanInteger(calcMath(step2, d, o3));
+  } else if (treeType === 3) {
+    step1 = calcMath(b, c, o2);
+    if (!isCleanInteger(step1)) return false;
+    step2 = calcMath(step1, d, o3);
+    if (!isCleanInteger(step2)) return false;
+    return isCleanInteger(calcMath(a, step2, o1));
+  } else if (treeType === 4) {
+    step1 = calcMath(c, d, o3);
+    if (!isCleanInteger(step1)) return false;
+    step2 = calcMath(b, step1, o2);
+    if (!isCleanInteger(step2)) return false;
+    return isCleanInteger(calcMath(a, step2, o1));
+  }
+  return false;
+}
+
+const opStrs = ["+", "-", "*", "/"];
+function buildFormulaString(p, o1, o2, o3, treeType) {
+  let A = toCustomBaseString(p[0]);
+  let B = toCustomBaseString(p[1]);
+  let C = toCustomBaseString(p[2]);
+  let D = toCustomBaseString(p[3]);
+  let op1 = opStrs[o1],
+    op2 = opStrs[o2],
+    op3 = opStrs[o3];
+
+  if (treeType === 0) return `((${A})${op1}(${B}))${op2}((${C})${op3}(${D}))`;
+  if (treeType === 1) return `(((${A})${op1}(${B}))${op2}(${C}))${op3}(${D})`;
+  if (treeType === 2) return `((${A})${op1}((${B})${op2}(${C})))${op3}(${D})`;
+  if (treeType === 3) return `(${A})${op1}(((${B})${op2}(${C}))${op3}(${D}))`;
+  if (treeType === 4) return `(${A})${op1}((${B})${op2}((${C})${op3}(${D})))`;
+}
+
+function fastSolve(nums, target, strictFractionCheck = false) {
   let permutations = permute(nums);
-  let ops = ["+", "-", "*", "/"];
-  let hasIntegerSolution = false;
-  let hasFractionSolution = false;
-  let fractionAnswerPattern = null;
+  let hasInt = false;
+  let hasFrac = false;
+  let fracPattern = null;
 
   for (let p of permutations) {
-    let formulas = [
-      `((A)O1(B))O2((C)O3(D))`,
-      `(((A)O1(B))O2(C))O3(D)`,
-      `((A)O1((B)O2(C)))O3(D)`,
-      `(A)O1(((B)O2(C))O3(D))`,
-      `(A)O1((B)O2((C)O3(D)))`,
-    ];
-    for (let o1 of ops) {
-      for (let o2 of ops) {
-        for (let o3 of ops) {
-          for (let fPattern of formulas) {
-            let isIntRoute = true;
-            if (
-              !checkIntegerOnly(p[0], p[1], o1) ||
-              !checkIntegerOnly(p[2], p[3], o3)
-            )
-              isIntRoute = false;
-            if (isIntRoute) {
-              let step1 = eval(`${p[0]}${o1}${p[1]}`);
-              let step2 = eval(`${p[2]}${o3}${p[3]}`);
-              if (
-                !Number.isInteger(step1) ||
-                !Number.isInteger(step2) ||
-                !checkIntegerOnly(step1, step2, o2)
-              )
-                isIntRoute = false;
-            }
+    for (let i = 0; i < 4; i++) {
+      for (let j = 0; j < 4; j++) {
+        for (let k = 0; k < 4; k++) {
+          let a = p[0],
+            b = p[1],
+            c = p[2],
+            d = p[3];
 
-            try {
-              let f = fPattern
-                .replace("A", p[0])
-                .replace("B", p[1])
-                .replace("C", p[2])
-                .replace("D", p[3])
-                .replace("O1", o1)
-                .replace("O2", o2)
-                .replace("O3", o3);
-              let res = eval(f);
+          let vals = [
+            calcMath(calcMath(a, b, i), calcMath(c, d, k), j),
+            calcMath(calcMath(calcMath(a, b, i), c, j), d, k),
+            calcMath(calcMath(a, calcMath(b, c, j), i), d, k),
+            calcMath(a, calcMath(calcMath(b, c, j), d, k), i),
+            calcMath(a, calcMath(b, calcMath(c, d, k), j), i),
+          ];
 
-              if (res !== undefined && isFinite(res) && !isNaN(res)) {
-                if (Math.abs(res - target) < 0.01) {
-                  if (isIntRoute) {
-                    hasIntegerSolution = true;
-                    if (!strictFractionCheck) {
-                      storeAnswerFormula(fPattern, p, o1, o2, o3);
-                      return true;
-                    }
-                  } else {
-                    hasFractionSolution = true;
-                    fractionAnswerPattern = { fPattern, p, o1, o2, o3 };
-                  }
+          for (let t = 0; t < 5; t++) {
+            let res = vals[t];
+            if (Number.isFinite(res) && Math.abs(res - target) < 0.001) {
+              let isIntRoute = checkIntRoute(p, i, j, k, t);
+              if (isIntRoute) {
+                hasInt = true;
+                if (!strictFractionCheck) {
+                  currentAnswerFormula = buildFormulaString(p, i, j, k, t);
+                  return true;
                 }
+              } else {
+                hasFrac = true;
+                fracPattern = { p, i, j, k, t };
               }
-            } catch (e) {}
+            }
           }
         }
       }
     }
   }
 
-  if (strictFractionCheck && hasFractionSolution && !hasIntegerSolution) {
-    storeAnswerFormula(
-      fractionAnswerPattern.fPattern,
-      fractionAnswerPattern.p,
-      fractionAnswerPattern.o1,
-      fractionAnswerPattern.o2,
-      fractionAnswerPattern.o3,
+  if (strictFractionCheck && hasFrac && !hasInt) {
+    currentAnswerFormula = buildFormulaString(
+      fracPattern.p,
+      fracPattern.i,
+      fracPattern.j,
+      fracPattern.k,
+      fracPattern.t,
     );
     return true;
   }
@@ -541,20 +590,25 @@ function solveStrictly(nums, target, strictFractionCheck = false) {
   return false;
 }
 
-function checkIntegerOnly(v1, v2, op) {
-  if (op === "/") {
-    if (v2 === 0) return false;
-    return v1 % v2 === 0;
+function isProblemRepeated(newNums) {
+  let sortedNew = [...newNums].sort((a, b) => a - b).join(",");
+  for (let past of pastProblemsHistory) {
+    if (past === sortedNew) return true;
   }
-  return true;
+  return false;
 }
 
+// 圧倒的な速度で純粋なランダムを何千回でも処理できるエンジン
 function preGenerateProblem() {
-  let maxAttempts = 1000;
+  let maxAttempts = modeFraction ? 5000 : 2000;
   let nums = [];
   let found = false;
 
   blindCardIndex = modeBlind ? Math.floor(Math.random() * 4) : -1;
+
+  let maxHistorySize = 3;
+  if (currentBase === 4) maxHistorySize = 1;
+  if (currentBase === 2) maxHistorySize = 0;
 
   for (let i = 0; i < maxAttempts; i++) {
     nums = [];
@@ -568,15 +622,29 @@ function preGenerateProblem() {
       }
     }
 
-    // 重複チェックを撤廃。生成された4つの数字が解ければ即座に確定
-    if (modeFraction) {
-      if (solveStrictly(nums, targetValue, true)) {
-        problemNumbers = nums;
-        found = true;
-        break;
+    if (isProblemRepeated(nums) && i < 100) continue;
+
+    if (fastSolve(nums, targetValue, modeFraction)) {
+      problemNumbers = nums;
+      found = true;
+      break;
+    }
+  }
+
+  // 分数モードで5000回回しても出なかった場合は、通常の整数OKルールに落として再探査
+  if (!found && modeFraction) {
+    for (let i = 0; i < 1000; i++) {
+      nums = [];
+      for (let j = 0; j < 4; j++) {
+        if (currentBase === 2) nums.push(Math.floor(Math.random() * 4));
+        else if (currentBase === 4) nums.push(Math.floor(Math.random() * 16));
+        else {
+          let val = Math.floor(Math.random() * (currentBase - 1)) + 1;
+          if (Math.random() < 0.08) val = 0;
+          nums.push(val);
+        }
       }
-    } else {
-      if (solveStrictly(nums, targetValue, false)) {
+      if (fastSolve(nums, targetValue, false)) {
         problemNumbers = nums;
         found = true;
         break;
@@ -584,18 +652,22 @@ function preGenerateProblem() {
     }
   }
 
+  // それでもダメな場合の緊急用鉄板データ
   if (!found) {
-    if (modeFraction) {
-      if (currentBase === 16) problemNumbers = [3, 3, 8, 8];
-      else if (currentBase === 4) problemNumbers = [1, 2, 3, 3];
-      else problemNumbers = [3, 3, 8, 8];
-    } else {
-      if (currentBase === 2) problemNumbers = [1, 1, 0, 0];
-      else if (currentBase === 4) problemNumbers = [1, 1, 1, 1];
-      else
-        problemNumbers = [1, 1, 1, targetValue - 3 > 0 ? targetValue - 3 : 1];
-    }
-    solveStrictly(problemNumbers, targetValue, false);
+    if (currentBase === 16) problemNumbers = [2, 4, 8, 2];
+    else if (currentBase === 10) problemNumbers = [2, 3, 5, 0];
+    else if (currentBase === 8) problemNumbers = [2, 2, 2, 2];
+    else if (currentBase === 4) problemNumbers = [1, 1, 1, 1];
+    else problemNumbers = [1, 1, 0, 0];
+    fastSolve(problemNumbers, targetValue, false);
+  }
+
+  if (maxHistorySize > 0) {
+    pastProblemsHistory.push(
+      [...problemNumbers].sort((a, b) => a - b).join(","),
+    );
+    if (pastProblemsHistory.length > maxHistorySize)
+      pastProblemsHistory.shift();
   }
 }
 
