@@ -59,7 +59,6 @@ body {
   position: relative;
 }
 
-/* テーマ切り替えボタンの配置（メニュー画面の最前面に表示されるよう z-index を15に拡張） */
 .btn-theme-toggle {
   position: absolute;
   top: 15px;

@@ -56,7 +56,7 @@ function showHomeMenu() {
   document.getElementById("game-overlay").style.display = "flex";
   document.getElementById("overlay-content").style.display = "flex";
 
-  // 一番実績のある「メニューに戻る」タイミングで、確実に各種変数をクリーンアップ
+  // スコアとゲームデータのクリーンアップ
   score = 0;
   document.getElementById("score-val").innerText = score;
   document.getElementById("timer-val").innerText = "60";
@@ -75,11 +75,15 @@ function showHomeMenu() {
 
   renderDummyCards();
 
+  // 【バグ修正】ホーム画面に戻ったとき、ゲームスタートボタンや設定項目を確実に初期化して表示する
   document.getElementById("overlay-title").innerHTML = "📢 MAKE10 PUZZLE";
   document.getElementById("overlay-msg").innerHTML =
     "条件を選んで、<br>ゲームスタートボタンを押してください。";
+
   document.getElementById("overlay-base-select").style.display = "block";
+  document.getElementById("overlay-btn-main").style.display = "block"; // ★ゲームスタートボタンを再表示
   document.getElementById("overlay-btn-main").innerText = "ゲームスタート";
+
   document.getElementById("overlay-btn-sub").style.display = "none";
 
   const toggleBtn = document.querySelector(".btn-toggle-options");
@@ -194,7 +198,6 @@ function overlayMainAction() {
   if (gameState === "SETUP") {
     initGameRound();
   } else if (gameState === "CLEAR") {
-    // ★【変更】もし何らかの理由でこのボタンが押された場合も強制的にメニュー初期化を挟む
     showHomeMenu();
   } else if (gameState === "PAUSED") {
     togglePause();
@@ -731,15 +734,16 @@ function showGameClearFinal() {
   document.getElementById("overlay-msg").innerHTML =
     "素晴らしい！見事10ポイント獲得しました！";
 
-  // 【仕様変更】誤動作を防ぐため、メインボタン（もう一度遊ぶ）は非表示化
+  // 【バグ修正】クリア画面に関係のない選択肢（10進数ヒント、制限時間など）を確実にすべて非表示化
   document.getElementById("overlay-base-select").style.display = "none";
-  document.getElementById("overlay-btn-main").style.display = "none";
+  document.getElementById("hex-time-container").style.display = "none";
+  document.getElementById("hint-select-container").style.display = "none"; // ★ヒント選択を隠す
 
-  // サブボタンを「ホーム画面に戻る」として活用
+  // メインボタンは非表示、サブボタンを「ホーム画面に戻る」にする
+  document.getElementById("overlay-btn-main").style.display = "none";
   document.getElementById("overlay-btn-sub").style.display = "block";
   document.getElementById("overlay-btn-sub").innerText = "🏠 ホーム画面に戻る";
 
-  // オプションパネル系もすべて非表示化
   const toggleBtn = document.querySelector(".btn-toggle-options");
   if (toggleBtn) toggleBtn.style.display = "none";
   document.getElementById("difficulty-options-panel").style.display = "none";
