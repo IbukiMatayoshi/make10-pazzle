@@ -363,7 +363,7 @@ function updateFormulaDisplay() {
       resultBox.innerText = `計算結果: ${displayRes}`;
 
       let allCardsUsed = usedCardIndices.length === 4;
-      if (allCardsUsed && Math.abs(res - targetValue) < 0.001) {
+      if (allCardsUsed && Math.abs(res - targetValue) < 0.01) {
         gameState = "TRANSITION";
         clearInterval(timerInterval);
 
@@ -468,7 +468,7 @@ function solveStrictly(nums, target, strictFractionCheck = false) {
   let ops = ["+", "-", "*", "/"];
   let hasIntegerSolution = false;
   let hasFractionSolution = false;
-  let fractionAnswerPattern = "";
+  let fractionAnswerPattern = null;
 
   for (let p of permutations) {
     let formulas = [
@@ -511,7 +511,7 @@ function solveStrictly(nums, target, strictFractionCheck = false) {
               let res = eval(f);
 
               if (res !== undefined && isFinite(res) && !isNaN(res)) {
-                if (Math.abs(res - target) < 0.001) {
+                if (Math.abs(res - target) < 0.01) {
                   if (isIntRoute) {
                     hasIntegerSolution = true;
                     if (!strictFractionCheck) {
@@ -531,7 +531,6 @@ function solveStrictly(nums, target, strictFractionCheck = false) {
     }
   }
 
-  // ★【タイポ修正完了】変数への不正な代入を消去し、安全に解答パターンを確定
   if (strictFractionCheck && hasFractionSolution && !hasIntegerSolution) {
     storeAnswerFormula(
       fractionAnswerPattern.fPattern,
@@ -563,7 +562,7 @@ function isProblemRepeated(newNums) {
 }
 
 function preGenerateProblem() {
-  let maxAttempts = 3000;
+  let maxAttempts = 1500;
   let nums = [];
 
   blindCardIndex = modeBlind ? Math.floor(Math.random() * 4) : -1;
@@ -599,13 +598,22 @@ function preGenerateProblem() {
     }
   }
 
+  // ★【バグ根絶】再帰呼び出しを完全撤廃。1500回で見つからなければ、絶対に解ける安全な固定データを1ミリ秒で即時セット
   if (modeFraction) {
-    problemNumbers = [3, 3, 8, 8];
-    solveStrictly(problemNumbers, targetValue, false);
+    // 分数必須の有名問題（10進数基準。進数ごとに自動変換・評価されます）
+    if (currentBase === 16) problemNumbers = [3, 3, 8, 8];
+    else if (currentBase === 4) problemNumbers = [1, 2, 3, 3];
+    else problemNumbers = [3, 3, 8, 8];
   } else {
-    problemNumbers = currentBase === 2 ? [1, 1, 0, 0] : [1, 1, 1, 2];
-    solveStrictly(problemNumbers, targetValue, false);
+    if (currentBase === 2) problemNumbers = [1, 1, 0, 0];
+    else if (currentBase === 4) problemNumbers = [1, 1, 1, 1];
+    else problemNumbers = [1, 1, 1, targetValue - 3 > 0 ? targetValue - 3 : 1];
   }
+
+  // 固定データに対する答えを確定させて安全終了
+  solveStrictly(problemNumbers, targetValue, false);
+  pastProblemsHistory.push([...problemNumbers].sort((a, b) => a - b).join(","));
+  if (pastProblemsHistory.length > 3) pastProblemsHistory.shift();
 }
 
 function renderCards() {
