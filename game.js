@@ -2,7 +2,7 @@
 let gameMode = "normal"; // "normal" | "timeattack" | "survival" | "mix"
 let currentBase = 10;
 let targetValue = 10;
-let problemNumbers = []; // 通常時: 数値の配列 / ミックス時: {val: 10進数値, base: 進数} のオブジェクト配列
+let problemNumbers = []; // 通常時: 数値の配列 / ミックス時: {val: 10進数値, base: 進数, id: 固有認識用番号} のオブジェクト配列
 let usedCardIndices = [];
 let currentFormula = [];
 let score = 0;
@@ -140,6 +140,8 @@ function showHomeMenu() {
 
   document.getElementById("giveup-btn").disabled = true;
   document.getElementById("pause-btn").disabled = true;
+  document.getElementById("sort-btn").style.display = "none";
+  document.getElementById("game-base-badge").innerText = "--進数"; // 看板リセット
 
   pastProblemsHistory = [];
   renderDummyCards();
@@ -187,6 +189,8 @@ function initGameRound() {
   modeTargetShift = document.getElementById("opt-target").checked;
   modeBlind = document.getElementById("opt-blind").checked;
 
+  const badge = document.getElementById("game-base-badge");
+
   if (gameMode === "mix") {
     currentBase = "mix";
     targetValue = 10;
@@ -194,10 +198,18 @@ function initGameRound() {
       document.getElementById("overlay-hint-select").value === "on";
     maxRoundTime =
       parseInt(document.getElementById("overlay-time-select").value) || 60;
+    document.getElementById("sort-btn").style.display = "inline-block";
+
+    // 看板文字をごちゃまぜ用にセット
+    if (badge) badge.innerText = "進数ミックス";
   } else {
+    document.getElementById("sort-btn").style.display = "none";
     currentBase = parseInt(
       document.getElementById("overlay-base-select").value,
     );
+
+    if (badge) badge.innerText = `${currentBase}進数`; // 看板文字を現在の進数にセット
+
     if (modeTargetShift) {
       if (currentBase === 4) targetValue = Math.floor(Math.random() * 8) + 2;
       else if (currentBase === 8)
@@ -225,8 +237,6 @@ function initGameRound() {
       isHintEnabled = false;
     }
   }
-
-  document.getElementById("game-base-select").value = currentBase;
 
   if (gameMode === "timeattack") {
     maxRoundTime = 300;
@@ -481,7 +491,6 @@ function showGameOverTimeAttack() {
 }
 
 function hideMenuElements() {
-  document.getElementById("overlay-base-select").style.display = "none";
   const timeContainer = document.getElementById("hex-time-container");
   const hintSection = document.getElementById("menu-section-hint");
   const baseSection = document.getElementById("menu-section-base");
@@ -509,6 +518,13 @@ function hideMenuElements() {
   document.getElementById("difficulty-options-panel").style.display = "none";
 
   document.getElementById("game-overlay").style.display = "flex";
+}
+
+function sortCardsByBase() {
+  if (gameState !== "PLAYING" || gameMode !== "mix") return;
+  clearFormulaInternal();
+  problemNumbers.sort((a, b) => a.base - b.base);
+  renderCards();
 }
 
 // --- 🧮 計算式・入力ディスプレイ制御系 ---
@@ -569,12 +585,16 @@ function updateFormulaDisplay() {
     if (res === undefined || isNaN(res) || !isFinite(res)) {
       resultBox.innerText = "計算結果: 数式が不完全です";
     } else {
-      let displayRes =
-        gameMode === "mix"
-          ? res.toFixed(2).replace(".00", "")
-          : Number.isInteger(res)
-            ? toCustomBaseString(res)
-            : res.toFixed(2) + " (小数)";
+      // ★【バグ修正＆スッキリ化】(10進数: 10) の無駄な重複テキストを完全カット
+      let displayRes = "";
+      if (gameMode === "mix") {
+        displayRes = res.toFixed(2).replace(".00", "");
+      } else {
+        displayRes = Number.isInteger(res)
+          ? toCustomBaseString(res)
+          : res.toFixed(2) + " (小数)";
+      }
+
       resultBox.innerText = `計算結果: ${displayRes}`;
 
       let allCardsUsed = usedCardIndices.length === 4;
@@ -605,10 +625,10 @@ function updateFormulaDisplay() {
 }
 
 function cleanUpCardsUsedState() {
-  problemNumbers.forEach((_, idx) => {
+  for (let idx = 0; idx < 4; idx++) {
     const card = document.getElementById(`card-${idx}`);
     if (card) card.classList.remove("used");
-  });
+  }
 }
 
 function clearFormulaInternal() {
@@ -857,7 +877,6 @@ function preGenerateProblem() {
   let found = false;
 
   blindCardIndex = modeBlind ? Math.floor(Math.random() * 4) : -1;
-
   let forceStrictFraction = modeFraction && Math.random() < 0.35;
 
   for (let i = 0; i < maxAttempts; i++) {
@@ -889,7 +908,11 @@ function preGenerateProblem() {
         fastSolve(nums, targetValue, true, gameMode === "mix" ? bases : null)
       ) {
         if (gameMode === "mix") {
-          problemNumbers = nums.map((v, idx) => ({ val: v, base: bases[idx] }));
+          problemNumbers = nums.map((v, idx) => ({
+            val: v,
+            base: bases[idx],
+            id: idx,
+          }));
         } else {
           problemNumbers = nums;
         }
@@ -901,7 +924,11 @@ function preGenerateProblem() {
         fastSolve(nums, targetValue, false, gameMode === "mix" ? bases : null)
       ) {
         if (gameMode === "mix") {
-          problemNumbers = nums.map((v, idx) => ({ val: v, base: bases[idx] }));
+          problemNumbers = nums.map((v, idx) => ({
+            val: v,
+            base: bases[idx],
+            id: idx,
+          }));
         } else {
           problemNumbers = nums;
         }
@@ -914,10 +941,10 @@ function preGenerateProblem() {
   if (!found) {
     if (gameMode === "mix") {
       problemNumbers = [
-        { val: 2, base: 10 },
-        { val: 3, base: 16 },
-        { val: 5, base: 8 },
-        { val: 0, base: 2 },
+        { val: 2, base: 10, id: 0 },
+        { val: 3, base: 16, id: 1 },
+        { val: 5, base: 8, id: 2 },
+        { val: 0, base: 2, id: 3 },
       ];
       currentAnswerFormula = "((2*5)+3)-0";
     } else {
@@ -948,12 +975,15 @@ function renderCards() {
     card.className = "card";
     card.id = `card-${idx}`;
 
-    let isBlindTarget = modeBlind && idx === blindCardIndex;
+    let isBlindTarget =
+      modeBlind &&
+      (gameMode === "mix"
+        ? item.id === blindCardIndex
+        : idx === blindCardIndex);
 
     if (gameMode === "mix") {
       const baseTag = document.createElement("div");
       baseTag.className = "card-base-tag";
-      // 【UI改善】進数ごとの識別クラス（tag-baseX）をバッジ要素に付与する
       baseTag.classList.add(`tag-base${item.base}`);
       baseTag.innerText = `${item.base}進数`;
       card.appendChild(baseTag);
@@ -1007,6 +1037,7 @@ function renderDummyCards() {
   }
 }
 
+// --- 🤝 ゲームクリア画面 ---
 function showGameClearFinal() {
   gameState = "CLEAR";
   if (timerInterval) clearInterval(timerInterval);

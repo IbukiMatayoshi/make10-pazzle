@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>make10 (イチゼロ) パズル - 新フロー版</title>
+    <title>make10 (イチゼロ) パズル - 洗練版</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body class="dark-theme">
@@ -164,20 +164,35 @@
       </div>
 
       <div class="settings">
-        <select id="game-base-select" disabled style="opacity: 0.7">
-          <option value="10">10進数</option>
-          <option value="16">16進数</option>
-          <option value="8">8進数</option>
-          <option value="4">4進数</option>
-          <option value="2">2進数</option>
-          <option value="mix">進数ごちゃまぜ</option>
-        </select>
+        <span
+          id="game-base-badge"
+          class="btn-ctrl-top"
+          style="
+            cursor: default;
+            font-weight: bold;
+            padding: 8px 16px;
+            background-color: rgba(128, 128, 128, 0.05);
+          "
+          >--進数</span
+        >
+        <button
+          id="sort-btn"
+          class="btn-ctrl-top"
+          style="
+            display: none;
+            border-color: var(--success-color);
+            color: var(--success-color);
+          "
+          onclick="sortCardsByBase()"
+        >
+          🔢 進数ソート
+        </button>
         <button
           id="giveup-btn"
           class="btn-ctrl-top btn-giveup"
           onclick="giveUpAndShowAnswer()"
         >
-          ギブアップ (答えを見る)
+          ギブアップ
         </button>
       </div>
 
