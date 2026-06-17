@@ -718,21 +718,18 @@ function checkIntRoute(p, i, j, k, t) {
     if (!isCleanInteger(step2)) return false;
     return isCleanInteger(calcMath(step2, d, k));
   } else if (t === 2) {
-    // a * (b * c * d) 系統
     step1 = calcMath(b, c, j);
     if (!isCleanInteger(step1)) return false;
     step2 = calcMath(step1, d, k);
     if (!isCleanInteger(step2)) return false;
     return isCleanInteger(calcMath(a, step2, i));
   } else if (t === 3) {
-    // a * (b * (c * d)) 系統
     step1 = calcMath(c, d, k);
     if (!isCleanInteger(step1)) return false;
     step2 = calcMath(b, step1, j);
     if (!isCleanInteger(step2)) return false;
     return isCleanInteger(calcMath(a, step2, i));
   } else if (t === 4) {
-    // (a * (b * c)) * d 系統
     step1 = calcMath(b, c, j);
     if (!isCleanInteger(step1)) return false;
     step2 = calcMath(a, step1, i);
@@ -743,7 +740,6 @@ function checkIntRoute(p, i, j, k, t) {
 }
 
 const opStrs = ["+", "-", "*", "/"];
-// ★【カッコ構造の完全修正】インデックス（treeType: 0〜4）とツリー構造の数学的対応を厳密にマッピング
 function buildFormulaString(p, o1, o2, o3, treeType, customBases = null) {
   let A = customBases
     ? toBaseString(p[0], customBases[0])
@@ -761,15 +757,10 @@ function buildFormulaString(p, o1, o2, o3, treeType, customBases = null) {
     op2 = opStrs[o2],
     op3 = opStrs[o3];
 
-  // t=0: ((A op1 B) op2 (C op3 D))
   if (treeType === 0) return `((${A})${op1}(${B}))${op2}((${C})${op3}(${D}))`;
-  // t=1: (((A op1 B) op2 C) op3 D)
   if (treeType === 1) return `(((${A})${op1}(${B}))${op2}(${C}))${op3}(${D})`;
-  // t=2: (A op1 ((B op2 C) op3 D))  ➔ ご提示いただいた 8 ÷ (5 ÷ (1 - 1/5)) 等を司るコア
   if (treeType === 2) return `(${A})${op1}((((${B})${op2}(${C}))${op3}(${D}))`;
-  // t=3: (A op1 (B op2 (C op3 D)))
   if (treeType === 3) return `(${A})${op1}((${B})${op2}((${C})${op3}(${D})))`;
-  // t=4: ((A op1 (B op2 C)) op3 D)
   if (treeType === 4) return `((${A})${op1}((${B})${op2}(${C})))${op3}(${D})`;
   return "";
 }
@@ -801,7 +792,6 @@ function fastSolve(
             c = p[2],
             d = p[3];
 
-          // 数学エンジン内の計算ツリー配列の定義
           let vals = [
             calcMath(calcMath(a, b, i), calcMath(c, d, k), j), // t=0
             calcMath(calcMath(calcMath(a, b, i), c, j), d, k), // t=1
@@ -839,7 +829,6 @@ function fastSolve(
   }
 
   if (strictFractionCheck && hasFrac && !hasInt) {
-    // 分数ルート確定時も、安全にマッピングを補正した状態のカッコひな形（fracPattern.t）を渡す
     currentAnswerFormula = buildFormulaString(
       fracPattern.p,
       fracPattern.i,
@@ -864,10 +853,13 @@ function isProblemRepeated(newNums) {
 
 // --- 🎲 クイズ問題オート生成モジュール ---
 function preGenerateProblem() {
-  let maxAttempts = modeFraction ? 5000 : 2000;
+  let maxAttempts = 5000;
   let found = false;
 
   blindCardIndex = modeBlind ? Math.floor(Math.random() * 4) : -1;
+
+  // ★【バランス調整のキモ】分数解禁時、35%の確率で「分数必須問題（3,3,8,8など）」を狙い撃ちする
+  let forceStrictFraction = modeFraction && Math.random() < 0.35;
 
   for (let i = 0; i < maxAttempts; i++) {
     let nums = [];
@@ -893,21 +885,32 @@ function preGenerateProblem() {
 
     if (isProblemRepeated(nums) && i < 100) continue;
 
-    if (
-      fastSolve(
-        nums,
-        targetValue,
-        modeFraction,
-        gameMode === "mix" ? bases : null,
-      )
-    ) {
-      if (gameMode === "mix") {
-        problemNumbers = nums.map((v, idx) => ({ val: v, base: bases[idx] }));
-      } else {
-        problemNumbers = nums;
+    if (forceStrictFraction) {
+      // 狙い撃ち確率に当選した場合は、整数ルートでは絶対に解けない問題だけを探す
+      if (
+        fastSolve(nums, targetValue, true, gameMode === "mix" ? bases : null)
+      ) {
+        if (gameMode === "mix") {
+          problemNumbers = nums.map((v, idx) => ({ val: v, base: bases[idx] }));
+        } else {
+          problemNumbers = nums;
+        }
+        found = true;
+        break;
       }
-      found = true;
-      break;
+    } else {
+      // 通常時、または分数ONの残り65%の時は、整数・分数どちらでも解ければ即採用（無限バリエーション化）
+      if (
+        fastSolve(nums, targetValue, false, gameMode === "mix" ? bases : null)
+      ) {
+        if (gameMode === "mix") {
+          problemNumbers = nums.map((v, idx) => ({ val: v, base: bases[idx] }));
+        } else {
+          problemNumbers = nums;
+        }
+        found = true;
+        break;
+      }
     }
   }
 
@@ -1040,7 +1043,7 @@ function renderReferenceTable() {
     refTable.innerHTML = `<div class="ref-item">8進数の <b>10</b> = 10進数の 8</div>`;
   } else if (currentBase === 4) {
     refTable.innerHTML = `<div class="ref-item"><b>01</b>=1</div><div class="ref-item"><b>10</b>=4</div><div class="ref-item"><b>20</b>=8</div><div class="ref-item"><b>30</b>=12</div>`;
-  } else if (currentBase === 2) {
+  } else if (currentBase === 8) {
     refTable.innerHTML = `<div class="ref-item"><b>00</b>=0</div><div class="ref-item"><b>01</b>=1</div><div class="ref-item"><b>10</b>=2</div><div class="ref-item"><b>11</b>=3</div>`;
   } else {
     refTable.innerHTML = `<div class="ref-item">馴染み深い 10進数モード</div>`;
