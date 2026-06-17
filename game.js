@@ -142,8 +142,6 @@ function showHomeMenu() {
   document.getElementById("pause-btn").disabled = true;
 
   pastProblemsHistory = [];
-
-  // 【バグ修正1】最下部に定義したrenderDummyCardsを安全に呼び出す
   renderDummyCards();
 
   document.getElementById("overlay-title").innerHTML = "📢 MAKE10 PUZZLE";
@@ -154,17 +152,19 @@ function showHomeMenu() {
   const btnMain = document.getElementById("overlay-btn-main");
   const btnSub = document.getElementById("overlay-btn-sub");
   const baseSection = document.getElementById("menu-section-base");
+  const baseSelect = document.getElementById("overlay-base-select"); // 進数セレクト本体
   const menuSections = document.querySelectorAll(".menu-section");
 
   if (modeSelect) modeSelect.style.display = "block";
   if (btnMain) {
     btnMain.style.display = "block";
-    btnMain.innerText = "ゲームスタート"; // 文字をスタート用にリセット
+    btnMain.innerText = "ゲームスタート";
   }
 
-  // 【バグ修正2】ホームメニューを開いたときは、サブの「中断してメニューへ」ボタンを100%確実に非表示にする
   if (btnSub) btnSub.style.display = "none";
   if (baseSection) baseSection.style.display = "block";
+  // ★【バグ修正】クリア画面で非表示にされていた進数セレクトボックス本体を確実に再表示する
+  if (baseSelect) baseSelect.style.display = "block";
 
   menuSections.forEach((sec) => {
     sec.style.display = "block";
@@ -302,6 +302,7 @@ function overlayMainAction() {
   }
 }
 
+// サブボタン（ホーム画面に戻る）が押された時の処理
 function overlaySubAction() {
   if (
     gameState === "PAUSED" ||
@@ -830,6 +831,7 @@ function fastSolve(
   }
 
   if (strictFractionCheck && hasFrac && !hasInt) {
+    // ★【バグ修正】分数チェックルートの際も、個別の進数情報（fracPattern.permBases）を漏れなく引き渡すように修正
     currentAnswerFormula = buildFormulaString(
       fracPattern.p,
       fracPattern.i,
@@ -980,7 +982,6 @@ function renderCards() {
   });
 }
 
-// ★【バグ修正1】消失していたダミーカード生成関数を完全に復元
 function renderDummyCards() {
   const container = document.getElementById("card-container");
   if (!container) return;
