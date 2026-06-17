@@ -7,239 +7,282 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body class="dark-theme">
-    <div class="container">
-      <button
-        class="btn-theme-toggle"
-        onclick="toggleTheme()"
-        id="theme-toggle-btn"
-        title="テーマを切り替え"
-      >
-        🌙
-      </button>
-
-      <div id="game-overlay" class="overlay">
-        <div id="overlay-content">
-          <h2 id="overlay-title">📢 MAKE10 PUZZLE</h2>
-          <p id="overlay-msg">条件を選んで、ゲームスタート！</p>
-
-          <div class="menu-section">
-            <div class="section-label">🎮 ゲームモード：</div>
-            <select
-              id="overlay-mode-select"
-              class="overlay-select-box-main"
-              onchange="handleModeSelectChange()"
-            >
-              <option value="normal" selected>通常 (10問チャレンジ)</option>
-              <option value="timeattack">
-                タイムアタック (時間内の純粋勝負)
-              </option>
-              <option value="survival">
-                連続正解サバイバル (ノーミス終了)
-              </option>
-              <option value="mix">
-                進数ごちゃまぜ (各カードがランダム進数)
-              </option>
-            </select>
-          </div>
-
-          <div class="menu-section" id="menu-section-base">
-            <div class="section-label">🔢 進数設定：</div>
-            <select
-              id="overlay-base-select"
-              class="overlay-select-box"
-              onchange="handleBaseSelectChange()"
-            >
-              <option value="10" selected>10進数</option>
-              <option value="16">16進数 (目標: 16 [10])</option>
-              <option value="8">8進数 (目標: 8 [10])</option>
-              <option value="4">4進数 (目標: 4 [10])</option>
-              <option value="2">2進数 (目標: 2 [10])</option>
-            </select>
-          </div>
-
-          <div id="hex-time-container" class="extra-select-container">
-            <div class="select-label">⏳ 1問の制限時間：</div>
-            <select
-              id="overlay-time-select"
-              class="overlay-select-box"
-              style="border-color: var(--warning-color)"
-            >
-              <option value="60" selected>1分 (標準)</option>
-              <option value="120">2分 (じっくり)</option>
-              <option value="180">3分 (たっぷり)</option>
-            </select>
-          </div>
-
-          <div class="menu-section" id="menu-section-hint">
-            <div class="section-label">💡 10進数ヒント表示：</div>
-            <select
-              id="overlay-hint-select"
-              class="overlay-select-box"
-              style="border-color: var(--success-color)"
-            >
-              <option value="on" selected>
-                あり (初級・カードの下に数字表示)
-              </option>
-              <option value="off">なし (上級・文字のみ硬派モード)</option>
-            </select>
-          </div>
-
+    <div class="game-container">
+      <div class="game-header">
+        <h1 class="game-title">make10 パズル</h1>
+        <div class="header-controls">
+          <span id="game-base-badge" class="base-badge">--進数</span>
           <button
-            class="btn-toggle-options"
-            onclick="toggleOptionsVisibility()"
+            id="theme-toggle-btn"
+            class="btn-icon"
+            onclick="toggleTheme()"
           >
-            🛠️ 特殊ルールを表示
+            🌙
           </button>
-
-          <div
-            class="difficulty-options-container"
-            id="difficulty-options-panel"
-          >
-            <div
-              class="select-label"
-              style="
-                color: var(--danger-color);
-                text-align: center;
-                width: 100%;
-              "
-            >
-              🔥 特殊ルール（複数選択可能）：
-            </div>
-
-            <label
-              class="checkbox-label"
-              style="opacity: 0.7; pointer-events: none"
-            >
-              <input type="checkbox" id="opt-none" checked disabled />
-              チェックなしで標準ルール
-            </label>
-
-            <label class="checkbox-label" id="label-opt-fraction">
-              <input
-                type="checkbox"
-                id="opt-fraction"
-                onchange="handleSpecialCheckboxChange()"
-              />
-              分数・小数解禁 (超難問)
-            </label>
-
-            <label class="checkbox-label" id="label-opt-target">
-              <input
-                type="checkbox"
-                id="opt-target"
-                onchange="handleSpecialCheckboxChange()"
-              />
-              ターゲット変動 (make X)
-            </label>
-
-            <label class="checkbox-label" id="label-opt-blind">
-              <input
-                type="checkbox"
-                id="opt-blind"
-                onchange="handleSpecialCheckboxChange()"
-              />
-              ブラインド (カード1枚伏せ)
-            </label>
-          </div>
-
-          <div class="overlay-button-container">
-            <button
-              id="overlay-btn-main"
-              class="btn-trigger btn-main-trigger"
-              onclick="overlayMainAction()"
-            >
-              ゲームスタート
-            </button>
-            <button
-              id="overlay-btn-sub"
-              class="btn-trigger btn-sub-trigger"
-              onclick="overlaySubAction()"
-            >
-              中断してメニューへ
-            </button>
-          </div>
         </div>
       </div>
 
-      <h1>make10 (イチゼロ) パズル</h1>
-
-      <div class="status-container">
-        <div class="score-box" id="game-score-box">
-          SCORE: <span id="score-val" class="score-val">0</span> / 10
+      <div class="status-panel">
+        <div class="status-left">
+          <div id="game-score-box" class="score-box">
+            SCORE: <span id="score-val" class="score-val">0</span> / 10
+          </div>
+          <div class="timer-box">
+            ⏳ <span id="timer-val" class="timer-val">60</span>s
+          </div>
         </div>
-        <div class="timer-box">
-          <button class="btn-pause" id="pause-btn" onclick="togglePause()">
-            一時停止
+        <div class="status-right">
+          <button
+            id="pause-btn"
+            class="btn-status-ctrl btn-pause-theme"
+            onclick="togglePause()"
+            disabled
+          >
+            ⏸️ 一時停止
           </button>
-          TIME: <span id="timer-val" class="timer-val">60</span>s
+          <button
+            id="giveup-btn"
+            class="btn-status-ctrl btn-giveup-theme"
+            onclick="giveUpAndShowAnswer()"
+            disabled
+          >
+            💡 降参
+          </button>
         </div>
       </div>
+
       <div class="gauge-container">
         <div id="gauge-bar" class="gauge-bar"></div>
       </div>
 
-      <div class="settings">
-        <span
-          id="game-base-badge"
-          class="btn-ctrl-top"
-          style="
-            cursor: default;
-            font-weight: bold;
-            padding: 8px 16px;
-            background-color: rgba(128, 128, 128, 0.05);
-          "
-          >--進数</span
-        >
-        <button
-          id="sort-btn"
-          class="btn-ctrl-top"
-          style="
-            display: none;
-            border-color: var(--success-color);
-            color: var(--success-color);
-          "
-          onclick="sortCardsByBase()"
-        >
-          🔢 進数ソート
-        </button>
-        <button
-          id="giveup-btn"
-          class="btn-ctrl-top btn-giveup"
-          onclick="giveUpAndShowAnswer()"
-        >
-          ギブアップ
-        </button>
+      <div id="target-info" class="target-card">目標値: -- を作れ！</div>
+
+      <div id="card-container" class="card-area"></div>
+
+      <div class="display-area">
+        <div id="formula-box" class="formula-display">数式を作ってください</div>
+        <div id="result-box" class="result-display">計算結果: -</div>
       </div>
 
-      <div class="reference-table" id="reference-table"></div>
-      <div class="target-info" id="target-info">--進数目標</div>
-      <div class="card-container" id="card-container"></div>
+      <div class="control-pad">
+        <button
+          id="sort-btn"
+          class="btn-sort-block"
+          style="display: none"
+          onclick="sortCardsByBase()"
+        >
+          🔢 カードを進数順に整列する
+        </button>
 
-      <div class="formula-box" id="formula-box">数式を作ってください</div>
-      <div class="result-box" id="result-box">計算結果: -</div>
-
-      <div class="keyboard-layout">
-        <div class="grid-inputs">
-          <button class="btn-ctrl btn-op" onclick="pressOp('+')">+</button>
-          <button class="btn-ctrl btn-op" onclick="pressOp('-')">−</button>
-          <button class="btn-ctrl btn-op" onclick="pressOp('*')">×</button>
-          <button class="btn-ctrl btn-op" onclick="pressOp('/')">÷</button>
-          <button class="btn-ctrl btn-op" onclick="pressOp('(')">(</button>
-          <button class="btn-ctrl btn-op" onclick="pressOp(')')">)</button>
-          <button
-            class="btn-ctrl btn-op"
-            style="grid-column: span 2; font-size: 13px; color: var(--text-sub)"
-            onclick="popFormula()"
-          >
-            末尾1文字消す
+        <div class="pad-row">
+          <button class="btn-op" onclick="pressOp('+')">+</button>
+          <button class="btn-op" onclick="pressOp('-')">−</button>
+          <button class="btn-op" onclick="pressOp('*')">×</button>
+          <button class="btn-op" onclick="pressOp('/')">÷</button>
+        </div>
+        <div class="pad-row">
+          <button class="btn-op" onclick="pressOp('(')">(</button>
+          <button class="btn-op" onclick="pressOp(')')">)</button>
+          <button class="btn-utility btn-pop" onclick="popFormula()">
+            ⌫ 戻る
+          </button>
+          <button class="btn-utility btn-clear" onclick="clearFormula()">
+            Clear
           </button>
         </div>
-        <div class="grid-actions">
-          <button class="btn-ctrl btn-back" onclick="popFormula()">
-            ⌫<br /><span style="font-size: 9px">戻る</span>
+      </div>
+
+      <div id="reference-table" class="ref-table-panel"></div>
+    </div>
+
+    <div id="game-overlay" class="overlay-layer">
+      <div id="overlay-content" class="overlay-card">
+        <h2 id="overlay-title">📢 MAKE10 PUZZLE</h2>
+        <p id="overlay-msg">
+          条件を選んで、ゲームスタートボタンを押してください。
+        </p>
+
+        <div class="menu-section">
+          <div class="section-label">🎮 ゲームモード</div>
+          <select
+            id="overlay-mode-select"
+            class="unified-select"
+            onchange="handleModeSelectChange()"
+          >
+            <option value="normal" selected>通常モード (10問チャレンジ)</option>
+            <option value="timeattack">タイムアタック (5分間連続挑戦)</option>
+            <option value="survival">サバイバルモード (時間切れ即終了)</option>
+            <option value="mix">進数ミックス (各カードがランダム進数)</option>
+          </select>
+        </div>
+
+        <div id="menu-section-base" class="menu-section">
+          <div class="section-label">🔢 基本進数ルール</div>
+          <select
+            id="overlay-base-select"
+            class="unified-select"
+            onchange="handleBaseSelectChange()"
+          >
+            <option value="10" selected>10進数 (0〜9)</option>
+            <option value="16">16進数 (0〜F)</option>
+            <option value="8">8進数 (0〜7)</option>
+            <option value="4">4進数 (00〜33)</option>
+            <option value="2">2進数 (00〜11)</option>
+          </select>
+        </div>
+
+        <div id="hex-time-container" class="menu-section" style="display: none">
+          <div class="section-label">⏳ 1問の制限時間</div>
+          <select id="overlay-time-select" class="unified-select">
+            <option value="45">45秒 (辛口・超上級向け)</option>
+            <option value="60" selected>60秒 (標準・中級向け)</option>
+            <option value="90">90秒 (甘口・初級向け)</option>
+            <option value="120">120秒 (激甘・練習向け)</option>
+          </select>
+        </div>
+
+        <div id="menu-section-hint" class="menu-section" style="display: none">
+          <div class="section-label">💡 10進数補助ヒント</div>
+          <select id="overlay-hint-select" class="unified-select">
+            <option value="on" selected>表示する (推奨)</option>
+            <option value="off">完全に非表示 (超上級者向け)</option>
+          </select>
+        </div>
+
+        <div class="menu-section">
+          <button
+            type="button"
+            class="btn-toggle-options"
+            onclick="toggleOptionsVisibility()"
+          >
+            🛠️ 特殊ルール（複数選択可）
           </button>
-          <button class="btn-ctrl btn-clear" onclick="clearFormula()">
-            Clear<br /><span style="font-size: 9px">全消去</span>
+          <div
+            id="difficulty-options-panel"
+            class="options-vertical-panel"
+            style="display: none"
+          >
+            <label class="option-row-card">
+              <input
+                type="checkbox"
+                id="opt-none"
+                checked
+                onclick="
+                  if (this.checked) {
+                    document.getElementById('opt-fraction').checked = false;
+                    document.getElementById('opt-target').checked = false;
+                    document.getElementById('opt-blind').checked = false;
+                  }
+                "
+              />
+              <span>標準ルール (特殊効果なし)</span>
+            </label>
+            <label class="option-row-card">
+              <input
+                type="checkbox"
+                id="opt-fraction"
+                onclick="handleSpecialCheckboxChange()"
+              />
+              <span>分数解の解禁 (割り切れない計算を経由)</span>
+            </label>
+            <label class="option-row-card">
+              <input
+                type="checkbox"
+                id="opt-target"
+                onclick="handleSpecialCheckboxChange()"
+              />
+              <span>目標値の変動 (10以外のランダムな数)</span>
+            </label>
+            <label class="option-row-card">
+              <input
+                type="checkbox"
+                id="opt-blind"
+                onclick="handleSpecialCheckboxChange()"
+              />
+              <span>ブラインド (カード1枚を『？』に隠蔽)</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="overlay-buttons-area">
+          <button
+            id="overlay-btn-main"
+            class="btn-menu-main"
+            onclick="overlayMainAction()"
+          >
+            ゲームスタート
+          </button>
+          <button
+            id="overlay-btn-rule"
+            class="btn-menu-rule"
+            onclick="openRuleModal()"
+          >
+            📖 ルール説明を見る
+          </button>
+          <button
+            id="overlay-btn-sub"
+            class="btn-menu-sub"
+            onclick="overlaySubAction()"
+            style="display: none"
+          >
+            🏠 メニューに戻る
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="rule-modal" class="rule-modal-layer" style="display: none">
+      <div class="rule-modal-card">
+        <div class="rule-modal-header">
+          <h3>📖 モード＆特殊ルール説明</h3>
+          <button class="rule-close-icon" onclick="closeRuleModal()">×</button>
+        </div>
+        <div class="rule-modal-body">
+          <h4>🎯 基本ルール</h4>
+          <p>
+            配られた4枚のカードを「＋・−・×・÷」と「カッコ」で繋ぎ、計算結果が指定の<b>目標値（10進数の10など）</b>になる数式を作るパズルゲームです。4枚のカードは必ず1回ずつ使い切る必要があります。
+          </p>
+
+          <h4>🎮 ゲームモード一覧</h4>
+          <ul>
+            <li>
+              <b>通常モード</b
+              ><br />全10問にじっくり挑戦する標準モードです。10問正解するとゲームクリアとなり最終スコアが記録されます。
+            </li>
+            <li>
+              <b>タイムアタック</b
+              ><br />制限時間「5分（300秒）」の一本勝負。制限時間内であれば、何問でも連続で解き続けることができ、正解数をどこまで伸ばせるかを競います。
+            </li>
+            <li>
+              <b>サバイバルモード</b
+              ><br />1問ごとの制限時間内に解けなければ、その時点で即ゲームオーバーとなる極限のノーミス耐久モードです。
+            </li>
+            <li>
+              <b>進数ミックス</b
+              ><br />カードごとに「2進数」「4進数」「8進数」「10進数」「16進数」の異なる進数タグが付与されます。目標値は10進数の「10」に固定されます。
+            </li>
+          </ul>
+
+          <h4>🛠️ 特殊オプション（複数掛け合わせ可能）</h4>
+          <ul>
+            <li>
+              <b>分数解の解禁</b><br />途中の計算や組み合わせで「3 ÷
+              7」などの綺麗な整数にならない分数（割り切れない数値）を経由する高度な数学パズルが出現するようになります。
+            </li>
+            <li>
+              <b>目標値の変動</b
+              ><br />目標値が「10進数の10」固定ではなく、選択した進数に合わせて毎回ランダムなターゲット値へ変動します。
+            </li>
+            <li>
+              <b>ブラインドモード</b
+              ><br />4枚のうち<b>「1枚が『？』」の状態で隠されて出題</b>されます。さらに、4枚すべてのカードを数式に組み込み、完全に式を完成させるまで計算結果は「？？
+              」と徹底的に隠蔽されます。最後の1枚をハメ込んだ瞬間に結果が暴かれる究極の推理パズルです。（正解時・降参時は隠されていたカードの正体が開帳されます）
+            </li>
+          </ul>
+        </div>
+        <div class="rule-modal-footer">
+          <button class="btn-rule-close" onclick="closeRuleModal()">
+            閉じる
           </button>
         </div>
       </div>

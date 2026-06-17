@@ -1,709 +1,703 @@
-/* ==========================================================================
-   🎨 カラーユニバーサルデザイン ＆ マルチテーマ定義
-   ========================================================================== */
-
-/* 🌙 ダークテーマ変数 */
-.dark-theme {
-  --primary-color: #4a90e2;
-  --success-color: #2ec4b6;
-  --danger-color: #ff4b5c;
-  --warning-color: #ff9f1c;
-  --bg-color: #1a1a22;
-  --panel-bg: #0f0f14;
-  --card-bg: #252533;
+/* --- 🎨 カラーユニバーサルデザイン(CUD) ＆ 厳密明度コントラスト定義 --- */
+:root {
+  --bg-main: #0d0e12;
+  --bg-card: #16171d;
+  --bg-overlay: rgba(0, 0, 0, 0.88);
+  --primary-color: #4ea8de;
+  --primary-hover: #5fa8d3;
+  --accent-color: #72efdd;
   --text-main: #ffffff;
-  --text-sub: #aaaaaa;
-  --border-color: #3a3a4f;
-  --formula-bg: #08080c;
-
-  /* 進数ごちゃまぜ用 CUDカラーパレット */
-  --base2-color: #707080;
-  --base4-color: #a855f7;
-  --base8-color: #ff9f1c;
-  --base10-color: #00b4d8;
-  --base16-color: #f72585;
+  --text-muted: #94a3b8;
+  --success-color: #38b000;
+  --warning-color: #ffaa00;
+  --danger-color: #ff334b;
+  --border-color: #2e303f;
+  --formula-bg: #090a0d;
+  --card-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
 }
 
-/* ☀️ ライトテーマ変数（【大幅改良】コントラストと識別性を極限まで強化） */
 .light-theme {
-  --primary-color: #10529a; /* より深い青にして文字の視認性を向上 */
-  --success-color: #0c7567; /* 深い緑 */
-  --danger-color: #b9041a; /* はっきりとした赤 */
-  --warning-color: #b45309; /* 濃いオレンジ */
-  --bg-color: #e5e7eb; /* 全体の背景（薄いグレー） */
-  --panel-bg: #ffffff; /* メインパネル（純白） */
-  --card-bg: #f3f4f6; /* カード背景（非常に薄いグレー） */
-  --text-main: #111827; /* メイン文字（ほぼ黒にしてコントラスト最大化） */
-  --text-sub: #374151; /* 補足文字（濃いグレー） */
-  --border-color: #9ca3af; /* 境界線（スマホの光に負けない強めのグレー） */
-  --formula-bg: #f9fafb; /* 数式ボックス背景 */
-
-  /* 白背景（ライトモード）で文字がクッキリ読める、高コントラストな進数固有カラー */
-  --base2-color: #4b5563; /* 濃いチャコールグレー */
-  --base4-color: #6d28d9; /* 深いパープル */
-  --base8-color: #c2410c; /* 濃いブラッドオレンジ */
-  --base10-color: #0369a1; /* 深いディープブルー */
-  --base16-color: #be185d; /* 濃いダークピンク */
+  --bg-main: #f0f2f5;
+  --bg-card: #ffffff;
+  --bg-overlay: rgba(0, 0, 0, 0.65);
+  --primary-color: #0b5fa5;
+  --primary-hover: #0077b6;
+  --accent-color: #0096c7;
+  --text-main: #111827;
+  --text-muted: #4b5563;
+  --success-color: #1b7334;
+  --warning-color: #d95400;
+  --danger-color: #cc001a;
+  --border-color: #9ca3af;
+  --formula-bg: #f9fafb;
+  --card-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
-/* ==========================================================================
-   🧱 共通基本スタイル設定
-   ========================================================================== */
 * {
   box-sizing: border-box;
-  transition:
-    background-color 0.2s ease,
-    color 0.2s ease,
-    border-color 0.2s ease;
+  margin: 0;
+  padding: 0;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 body {
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  background-color: var(--bg-color);
+  background-color: var(--bg-main);
   color: var(--text-main);
   display: flex;
-  flex-direction: column;
+  justify-content: center;
   align-items: center;
-  padding: 10px;
-  margin: 0;
   min-height: 100vh;
-  justify-content: center;
+  padding: 12px;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
 }
 
-.container {
-  background-color: var(--panel-bg);
-  padding: 25px;
-  border-radius: 20px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+.game-container {
+  background-color: var(--bg-card);
   width: 100%;
-  max-width: 480px;
-  text-align: center;
-  position: relative;
-  border: 1px solid var(--border-color); /* ライトモード時のパネルの輪郭を強化 */
-}
-
-.btn-theme-toggle {
-  position: absolute;
-  top: 15px;
-  right: 15px;
-  background: var(--card-bg);
+  max-width: 460px;
+  border-radius: 24px;
+  padding: 20px;
+  box-shadow: var(--card-shadow);
   border: 1px solid var(--border-color);
-  border-radius: 50%;
-  width: 36px;
-  height: 36px;
-  font-size: 16px;
-  cursor: pointer;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 15;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-.btn-theme-toggle:hover {
-  background-color: rgba(128, 128, 128, 0.15);
+  flex-direction: column;
+  gap: 14px;
 }
 
-h1 {
-  margin-top: 0;
-  margin-bottom: 15px;
-  font-size: 24px;
-  letter-spacing: 1px;
-  color: var(--primary-color);
-  font-weight: 800;
-}
-
-/* 📊 ステータス表示エリア */
-.status-container {
+/* --- ヘッダー --- */
+.game-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
-  background: rgba(128, 128, 128, 0.05);
-  padding: 10px 15px;
-  border-radius: 12px;
+  border-bottom: 2px solid var(--border-color);
+  padding-bottom: 10px;
+}
+
+.game-title {
+  font-size: 20px;
+  font-weight: 900;
+  background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.base-badge {
+  background-color: var(--primary-color);
+  color: #ffffff !important;
+  font-size: 11px;
+  font-weight: bold;
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+
+.btn-icon {
+  background: var(--formula-bg);
   border: 1px solid var(--border-color);
+  font-size: 16px;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+}
+
+/* --- 📊 上部ステータスパネル --- */
+.status-panel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(128, 128, 128, 0.04);
+  padding: 8px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--border-color);
+}
+.status-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+}
+.status-right {
+  display: flex;
+  gap: 6px;
 }
 
 .score-box {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: bold;
-  color: var(--text-main);
+  color: var(--text-muted);
 }
 .score-val {
   color: var(--warning-color);
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 800;
 }
 .timer-box {
   font-size: 14px;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  font-weight: 800;
   color: var(--text-main);
 }
-.timer-val {
-  color: var(--danger-color);
-  font-size: 20px;
-  font-family: monospace;
-  font-weight: 800;
+
+.btn-status-ctrl {
+  font-size: 11px;
+  font-weight: bold;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: none;
+  color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+.btn-status-ctrl:disabled {
+  opacity: 0.15;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+.btn-pause-theme {
+  background-color: var(--primary-color);
+}
+.btn-giveup-theme {
+  background-color: var(--danger-color);
 }
 
-/* ⏳ タイマーバー */
+/* タイムゲージ */
 .gauge-container {
   width: 100%;
-  height: 10px;
-  background-color: rgba(128, 128, 128, 0.15);
-  border-radius: 5px;
-  margin-bottom: 15px;
+  height: 8px;
+  background-color: var(--border-color);
+  border-radius: 4px;
   overflow: hidden;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
   border: 1px solid var(--border-color);
 }
 .gauge-bar {
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, #ffcc00, var(--warning-color));
+  background: linear-gradient(90deg, #ffd60a, var(--warning-color));
   transition: width 1s linear;
 }
 
-/* ⚙️ 上部コントロール */
-.settings {
-  margin-bottom: 15px;
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-}
-
-select,
-.btn-ctrl-top {
-  font-size: 13px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid var(--border-color);
-  background-color: var(--card-bg);
-  color: var(--text-main);
-  font-weight: bold;
-  cursor: pointer;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-.btn-giveup {
-  border: 2px solid var(--danger-color);
-  color: var(--danger-color);
-  font-weight: bold;
-  background-color: transparent;
-}
-.btn-giveup:hover {
-  background-color: rgba(255, 75, 92, 0.1);
-}
-.btn-giveup:disabled {
-  border-color: var(--border-color);
-  color: var(--text-sub);
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-.btn-pause {
-  border: 1px solid var(--primary-color);
-  color: var(--primary-color);
-  font-weight: bold;
-  padding: 4px 8px;
-  font-size: 11px;
-  border-radius: 6px;
-  background-color: transparent;
-}
-
-/* 進数早見表 */
-.reference-table {
-  background-color: rgba(128, 128, 128, 0.03);
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
-  padding: 8px;
-  margin-bottom: 15px;
-  font-size: 12px;
-  color: var(--text-sub);
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-  flex-wrap: wrap;
-  min-height: 35px;
-  font-weight: 500;
-}
-.ref-item {
-  background: var(--panel-bg);
-  border: 1px solid var(--border-color);
-  padding: 2px 6px;
-  border-radius: 5px;
-  border-bottom: 2px solid var(--primary-color);
-}
-.ref-item b {
-  color: var(--text-main);
-}
-
-.target-info {
-  font-size: 16px;
-  font-weight: bold;
-  margin-bottom: 15px;
-  background: linear-gradient(135deg, var(--card-bg), var(--panel-bg));
-  padding: 12px;
+.target-card {
+  background: var(--formula-bg);
+  border: 1px dashed var(--primary-color);
   border-radius: 12px;
-  border-left: 5px solid var(--success-color);
-  border-top: 1px solid var(--border-color);
-  border-right: 1px solid var(--border-color);
-  border-bottom: 1px solid var(--border-color);
-  word-break: break-all;
-}
-
-/* 🃏 数字カードエリア */
-.card-container {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 15px;
-}
-.card {
-  background-color: var(--card-bg);
-  border: 2px solid var(--border-color);
-  border-radius: 12px;
-  flex: 1;
-  aspect-ratio: 3/4;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.08);
-  user-select: none;
-}
-.card:hover {
-  transform: translateY(-2px);
-  border-color: var(--primary-color);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
-}
-.card.used {
-  background-color: rgba(128, 128, 128, 0.12) !important;
-  border-color: var(--border-color) !important;
-  color: var(--text-sub) !important;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-  opacity: 0.6;
-}
-
-.card-main-text {
-  font-size: 28px;
-  font-weight: 900;
-  color: var(--text-main);
-}
-.card-hint-text {
-  font-size: 11px;
-  color: var(--warning-color);
-  margin-top: 1px;
-  font-weight: 700;
-}
-.card.used .card-hint-text {
-  color: var(--text-sub) !important;
-  opacity: 0.5;
-}
-
-/* 🌟 進数ミックス用・高コントラスト固有バッジ */
-.card-base-tag {
-  font-size: 9px;
-  color: #ffffff !important; /* ライトモードでも100%白文字を維持 */
-  padding: 2px 6px;
-  border-radius: 4px;
-  margin-bottom: 4px;
-  font-weight: 800;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
-}
-.tag-base2 {
-  background-color: var(--base2-color);
-}
-.tag-base4 {
-  background-color: var(--base4-color);
-}
-.tag-base8 {
-  background-color: var(--base8-color);
-}
-.tag-base10 {
-  background-color: var(--base10-color);
-}
-.tag-base16 {
-  background-color: var(--base16-color);
-}
-
-/* 📝 ディスプレイ枠 */
-.formula-box {
-  border: 2px solid var(--border-color);
   padding: 10px;
-  min-height: 46px;
-  font-size: 22px;
-  font-weight: bold;
-  margin-bottom: 8px;
-  border-radius: 12px;
-  background-color: var(--formula-bg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 4px;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.result-box {
+  text-align: center;
   font-size: 14px;
   font-weight: bold;
-  margin-bottom: 15px;
-  color: var(--text-sub);
-  min-height: 70px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-.success-text {
-  color: var(--success-color);
-  font-size: 16px;
-  font-weight: 900;
-}
-.fail-text {
-  color: var(--danger-color);
-  font-size: 14px;
-  display: block;
-  font-weight: 700;
 }
 
-.btn-next-stage {
-  background-color: var(--primary-color);
-  color: #fff;
-  border: none;
-  padding: 10px 24px;
-  font-size: 14px;
-  font-weight: bold;
-  border-radius: 8px;
-  cursor: pointer;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-}
-.btn-next-stage:hover {
-  transform: scale(1.04);
-  opacity: 0.9;
-}
-
-/* ⌨️ キーボード（ライトモードでもボタンの境界線を強化） */
-.keyboard-layout {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr) 75px;
-  gap: 8px;
-}
-.grid-inputs {
+/* --- 🃏 カードエリア --- */
+.card-area {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 8px;
-  grid-column: span 4;
 }
-.grid-actions {
+.card {
+  background: linear-gradient(135deg, var(--bg-card), var(--border-color));
+  border: 2px solid var(--border-color);
+  border-radius: 14px;
+  aspect-ratio: 3 / 4;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  position: relative;
+  overflow: hidden;
+}
+.card:hover:not(.used) {
+  border-color: var(--primary-color);
+  transform: translateY(-2px);
+}
+.card.used {
+  opacity: 0.2;
+  cursor: not-allowed;
+  border-color: var(--border-color) !important;
+  box-shadow: none;
+}
+
+.card-main-text {
+  font-size: 24px;
+  font-weight: 900;
+}
+.card-hint-text {
+  font-size: 10px;
+  color: var(--warning-color);
+  font-weight: bold;
+  margin-top: 1px;
+}
+
+.card-base-tag {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  font-size: 8px;
+  font-weight: 900;
+  text-align: center;
+  padding: 1px 0;
+  color: #ffffff !important;
+}
+.tag-base2 {
+  background-color: #64748b;
+}
+.tag-base4 {
+  background-color: #a855f7;
+}
+.tag-base8 {
+  background-color: #ea580c;
+}
+.tag-base10 {
+  background-color: #0284c7;
+}
+.tag-base16 {
+  background-color: #db2777;
+}
+
+/* ディスプレイエリア */
+.display-area {
+  background-color: var(--formula-bg);
+  border: 2px solid var(--border-color);
+  border-radius: 14px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 84px;
+  justify-content: center;
+}
+.formula-display {
+  font-size: 20px;
+  font-weight: 800;
+  text-align: center;
+  word-break: break-all;
+}
+
+/* ★【UX改善】ギブアップ時の数式テキストがスマホ画面でも絶対に勝手に改行されないようにがっちり防御 */
+.result-display {
+  font-size: 13px;
+  font-weight: bold;
+  color: var(--text-muted);
+  text-align: center;
+  white-space: nowrap;
+  overflow-x: auto;
+  max-width: 100%;
+  width: 100%;
+}
+
+/* --- ⌨️ 入力制御パッド群 --- */
+.control-pad {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
-.btn-ctrl {
-  font-size: 18px;
-  font-weight: bold;
-  padding: 12px 0;
-  border-radius: 10px;
-  border: none;
-  color: #fff;
-  cursor: pointer;
-  user-select: none;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-}
-.btn-ctrl:active {
-  transform: translateY(1px);
-  box-shadow: none;
-}
-.btn-op {
-  background-color: var(--panel-bg);
-  color: var(--text-main);
-  border: 2px solid var(--border-color);
-}
-.btn-op:hover {
-  background-color: rgba(128, 128, 128, 0.08);
-  border-color: var(--primary-color);
-}
-.btn-back {
-  background-color: var(--warning-color);
-  font-size: 14px;
-  flex: 1;
-  color: #fff;
-}
-.btn-clear {
-  background-color: var(--danger-color);
-  font-size: 12px;
-  flex: 1;
+.pad-row {
+  display: flex;
+  gap: 8px;
+  width: 100%;
 }
 
-/* 🪟 オーバーレイメニュー画面 */
-.overlay {
-  display: none;
-  position: absolute;
+.btn-sort-block {
+  width: 100%;
+  background-color: var(--success-color);
+  color: #fff;
+  border: none;
+  padding: 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  margin-bottom: 2px;
+}
+
+.btn-op {
+  flex: 1;
+  background-color: var(--bg-card);
+  border: 2px solid var(--border-color);
+  color: var(--text-main);
+  font-size: 20px;
+  font-weight: bold;
+  padding: 10px 0;
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+.btn-op:hover {
+  border-color: var(--primary-color);
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+.btn-utility {
+  font-size: 12px;
+  font-weight: bold;
+  border: none;
+  color: #ffffff;
+  border-radius: 12px;
+  cursor: pointer;
+  padding: 0 10px;
+}
+.btn-pop {
+  background-color: #4b5563;
+  flex: 1.3;
+}
+.btn-clear {
+  background-color: #dc2626;
+  flex: 1.2;
+}
+
+.ref-table-panel {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 10px;
+  border-top: 1px solid var(--border-color);
+  padding-top: 8px;
+}
+.ref-item {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: bold;
+}
+
+/* ==========================================================================
+   🚪 オーバーレイメニュー画面
+   ========================================================================== */
+.overlay-layer {
+  position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: var(--panel-bg);
-  border-radius: 20px;
-  flex-direction: column;
-  align-items: center;
+  background-color: var(--bg-overlay);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
   justify-content: center;
-  z-index: 10;
-  padding: 20px;
-  border: 2px solid var(--border-color);
-  overflow-y: auto;
-}
-.overlay h2 {
-  font-size: 26px;
-  margin-bottom: 6px;
-  letter-spacing: 1px;
-  color: var(--primary-color);
-  font-weight: 900;
-}
-.overlay p {
-  font-size: 13px;
-  color: var(--text-sub);
-  margin-bottom: 15px;
-  line-height: 1.4;
-  font-weight: 600;
+  align-items: center;
+  z-index: 1000;
+  padding: 12px;
 }
 
-#overlay-content {
+.overlay-card {
+  background-color: var(--bg-card);
   width: 100%;
+  max-width: 380px;
+  border-radius: 24px;
+  padding: 22px;
+  border: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  gap: 14px;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.5);
+}
+
+#overlay-title {
+  font-size: 20px;
+  font-weight: 900;
+  text-align: center;
+  color: var(--primary-color);
+  letter-spacing: 0.5px;
+}
+#overlay-msg {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.4;
 }
 
 .menu-section {
-  width: 100%;
-  max-width: 280px;
-  margin-bottom: 12px;
-  text-align: left;
-}
-.section-label {
-  font-size: 12px;
-  font-weight: 800;
-  color: var(--text-sub);
-  margin-bottom: 5px;
-  padding-left: 4px;
-}
-
-.overlay-select-box-main {
-  font-size: 14px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 2px solid var(--primary-color);
-  background-color: var(--panel-bg);
-  color: var(--primary-color);
-  cursor: pointer;
-  width: 100%;
-  font-weight: bold;
-}
-
-.overlay-select-box {
-  font-size: 13px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 2px solid var(--border-color);
-  background-color: var(--panel-bg);
-  color: var(--text-main);
-  cursor: pointer;
-  width: 100%;
-  font-weight: 600;
-}
-
-.overlay-button-container {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 4px;
   width: 100%;
-  max-width: 280px;
-  margin-top: 10px;
+}
+.section-label {
+  font-size: 11px;
+  font-weight: 900;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  padding-left: 2px;
 }
 
-.btn-trigger {
-  font-size: 15px;
-  padding: 12px;
-  border: none;
+.unified-select {
+  background-color: var(--formula-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 10px 12px;
   border-radius: 10px;
+  font-size: 13.5px;
   font-weight: bold;
+  outline: none;
   cursor: pointer;
   width: 100%;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-.btn-trigger:hover {
-  transform: scale(1.02);
-}
-.btn-main-trigger {
-  background-color: var(--success-color);
-  color: #fff;
-}
-.btn-sub-trigger {
-  background-color: var(--panel-bg);
-  border: 2px solid var(--danger-color);
-  color: var(--danger-color);
-}
-
-.extra-select-container {
-  display: none;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-  max-width: 280px;
-  margin-bottom: 12px;
-}
-.select-label {
-  font-size: 12px;
-  color: var(--warning-color);
-  margin-bottom: 4px;
-  font-weight: bold;
-  align-self: flex-start;
-  padding-left: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) inset;
 }
 
 .btn-toggle-options {
+  background: none;
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: bold;
+  cursor: pointer;
+  width: fit-content;
+  align-self: center;
+}
+
+/* ★【UX改善】バラバラだった四角配置を完全撤廃し、縦に整然と流れる高視認性のカード行リストへと変更 */
+.options-vertical-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--formula-bg);
+  padding: 8px;
+  border-radius: 12px;
+  border: 1px dashed var(--border-color);
+}
+.option-row-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  background-color: var(--bg-card);
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  transition:
+    border-color 0.2s,
+    background-color 0.2s;
+  width: 100%;
+}
+.option-row-card:hover {
+  border-color: var(--primary-color);
+  background-color: rgba(128, 128, 128, 0.02);
+}
+.option-row-card input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary-color);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.option-row-card span {
+  font-size: 12px;
+  font-weight: bold;
+  color: var(--text-main);
+  text-align: left;
+}
+
+.overlay-buttons-area {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+.btn-menu-main {
+  background: linear-gradient(
+    135deg,
+    var(--primary-color),
+    var(--accent-color)
+  );
+  color: #ffffff !important;
+  border: none;
+  font-size: 15px;
+  font-weight: bold;
+  padding: 12px 0;
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(78, 168, 222, 0.25);
+}
+.btn-menu-rule {
+  background-color: rgba(128, 128, 128, 0.08);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  font-size: 13px;
+  font-weight: bold;
+  padding: 10px 0;
+  border-radius: 12px;
+  cursor: pointer;
+}
+.btn-menu-sub {
   background-color: transparent;
-  border: 2px dashed var(--primary-color);
+  border: 1px solid var(--danger-color);
+  color: var(--danger-color);
+  font-size: 13px;
+  font-weight: bold;
+  padding: 10px 0;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+/* 📖 ルールモーダル */
+.rule-modal-layer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  padding: 16px;
+}
+.rule-modal-card {
+  background-color: var(--bg-card);
+  width: 100%;
+  max-width: 420px;
+  max-height: 80vh;
+  border-radius: 20px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+}
+.rule-modal-header {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.rule-modal-header h3 {
+  font-size: 15px;
+  font-weight: bold;
   color: var(--primary-color);
+}
+.rule-close-icon {
+  background: none;
+  border: none;
+  font-size: 22px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.rule-modal-body {
+  padding: 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  line-height: 1.5;
+}
+.rule-modal-body h4 {
+  font-size: 12px;
+  color: var(--accent-color);
+  border-left: 3px solid var(--accent-color);
+  padding-left: 6px;
+}
+.rule-modal-body p,
+.rule-modal-body li {
+  font-size: 12px;
+  color: var(--text-main);
+}
+.rule-modal-body ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.rule-modal-body li {
+  background: rgba(128, 128, 128, 0.04);
+  padding: 8px;
+  border-radius: 8px;
+  border-left: 2px solid var(--border-color);
+}
+.rule-modal-body b {
+  color: var(--warning-color);
+}
+.rule-modal-footer {
+  padding: 10px 16px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: flex-end;
+}
+.btn-rule-close {
+  background-color: var(--border-color);
+  color: var(--text-main);
+  border: none;
   padding: 8px 16px;
   border-radius: 8px;
   font-size: 12px;
   font-weight: bold;
   cursor: pointer;
-  margin-top: 5px;
-  margin-bottom: 12px;
-  width: 100%;
-  max-width: 280px;
-}
-.btn-toggle-options:hover {
-  background-color: rgba(16, 82, 154, 0.05);
 }
 
-.difficulty-options-container {
-  display: none;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  background: rgba(128, 128, 128, 0.05);
-  padding: 12px;
-  border-radius: 10px;
-  border: 2px solid var(--border-color);
-  margin-bottom: 12px;
-  width: 100%;
-  max-width: 280px;
+.success-text {
+  color: var(--success-color);
+  font-weight: bold;
+  font-size: 14px;
 }
-.checkbox-label {
-  font-size: 12px;
-  color: var(--text-main);
+.btn-next-stage {
+  background-color: var(--success-color);
+  color: #ffffff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: bold;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 8px;
-  user-select: none;
-  width: 100%;
-  max-width: 220px;
-  font-weight: 600;
-}
-.checkbox-label input {
-  cursor: pointer;
-  width: 16px;
-  height: 16px;
-  margin: 0;
+  margin-top: 4px;
 }
 
-/* 📱 スマートフォンサイズ（画面幅480px以下） */
-@media screen and (max-width: 480px) {
+/* 📱 スマートフォン縦画面（横幅480px以下）の完全レスポンシブ最適化 */
+@media screen and (max-width: 440px) {
   body {
     padding: 6px;
   }
-  .container {
-    padding: 15px 10px;
-    border-radius: 14px;
+  .game-container {
+    padding: 14px 10px;
+    gap: 10px;
+    border-radius: 16px;
   }
-  h1 {
-    font-size: 20px;
-    margin-bottom: 10px;
+  .game-header {
+    padding-bottom: 8px;
   }
-  .status-container {
-    padding: 8px 10px;
-    margin-bottom: 10px;
+  .game-title {
+    font-size: 17px;
   }
-  .score-box {
-    font-size: 12px;
+  .status-panel {
+    padding: 6px 10px;
   }
-  .score-val {
-    font-size: 16px;
-  }
+  .score-val,
   .timer-val {
     font-size: 16px;
   }
-  .target-info {
-    font-size: 13px;
-    padding: 10px;
-    margin-bottom: 12px;
-  }
-  .card-container {
-    gap: 6px;
-    margin-bottom: 12px;
-  }
   .card-main-text {
-    font-size: 22px;
+    font-size: 20px;
   }
-  .card-hint-text {
-    font-size: 10px;
+  .formula-display {
+    font-size: 17px;
   }
-  .card-base-tag {
-    font-size: 8px;
-    padding: 1px 3px;
-  }
-  .formula-box {
+  .btn-op {
     font-size: 18px;
-    min-height: 42px;
-    padding: 8px;
+    padding: 8px 0;
   }
-  .result-box {
-    min-height: 60px;
-    margin-bottom: 12px;
-    font-size: 13px;
-  }
-  .keyboard-layout {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 6px;
-  }
-  .grid-inputs {
-    grid-template-columns: repeat(4, 1fr);
-    grid-column: span 4;
-    gap: 6px;
-  }
-  .grid-inputs button:nth-child(7) {
-    grid-column: span 2;
-  }
-  .grid-actions {
-    grid-column: span 1;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-  .btn-ctrl {
-    font-size: 15px;
-    padding: 10px 0;
-  }
-  .btn-back,
-  .btn-clear {
+  .btn-status-ctrl {
+    padding: 4px 8px;
     font-size: 10px;
-    line-height: 1.1;
+  }
+  .overlay-card {
+    padding: 16px;
+    gap: 12px;
   }
 }
