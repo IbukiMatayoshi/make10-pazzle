@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>make10 (イチゼロ) パズル - 洗練版</title>
+    <title>make10 (イチゼロ) パズル - 特殊ルール複数選択版</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body class="dark-theme">
@@ -103,26 +103,41 @@
                 width: 100%;
               "
             >
-              🔥 特殊ルール効果：
+              🔥 特殊ルール（複数選択可能）：
             </div>
 
-            <label class="checkbox-label">
-              <input type="radio" name="special-mode" id="opt-none" checked />
-              なし (標準ルール)
+            <label
+              class="checkbox-label"
+              style="opacity: 0.7; pointer-events: none"
+            >
+              <input type="checkbox" id="opt-none" checked disabled />
+              チェックなしで標準ルール
             </label>
 
             <label class="checkbox-label" id="label-opt-fraction">
-              <input type="radio" name="special-mode" id="opt-fraction" />
+              <input
+                type="checkbox"
+                id="opt-fraction"
+                onchange="handleSpecialCheckboxChange()"
+              />
               分数・小数解禁 (超難問)
             </label>
 
             <label class="checkbox-label" id="label-opt-target">
-              <input type="radio" name="special-mode" id="opt-target" />
+              <input
+                type="checkbox"
+                id="opt-target"
+                onchange="handleSpecialCheckboxChange()"
+              />
               ターゲット変動 (make X)
             </label>
 
-            <label class="checkbox-label">
-              <input type="radio" name="special-mode" id="opt-blind" />
+            <label class="checkbox-label" id="label-opt-blind">
+              <input
+                type="checkbox"
+                id="opt-blind"
+                onchange="handleSpecialCheckboxChange()"
+              />
               ブラインド (カード1枚伏せ)
             </label>
           </div>

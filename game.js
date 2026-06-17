@@ -54,18 +54,33 @@ function toggleOptionsVisibility() {
 }
 
 // --- 📂 メニュー画面・モード変更制御 ---
+function handleSpecialCheckboxChange() {
+  const frac = document.getElementById("opt-fraction").checked;
+  const target = document.getElementById("opt-target").checked;
+  const blind = document.getElementById("opt-blind").checked;
+  const optNone = document.getElementById("opt-none");
+
+  if (frac || target || blind) {
+    if (optNone) optNone.checked = false;
+  } else {
+    if (optNone) optNone.checked = true;
+  }
+}
+
 function handleModeSelectChange() {
   const mode = document.getElementById("overlay-mode-select").value;
   const baseSection = document.getElementById("menu-section-base");
   const targetLabel = document.getElementById("label-opt-target");
   const optTarget = document.getElementById("opt-target");
-  const optNone = document.getElementById("opt-none");
 
   if (mode === "mix") {
     if (baseSection) baseSection.style.display = "none";
-    if (optTarget.checked) optNone.checked = true;
-    optTarget.disabled = true;
-    targetLabel.style.opacity = "0.3";
+
+    if (optTarget) {
+      optTarget.checked = false;
+      optTarget.disabled = true;
+    }
+    if (targetLabel) targetLabel.style.opacity = "0.3";
 
     const timeContainer = document.getElementById("hex-time-container");
     const hintSection = document.getElementById("menu-section-hint");
@@ -73,10 +88,11 @@ function handleModeSelectChange() {
     if (hintSection) hintSection.style.display = "block";
   } else {
     if (baseSection) baseSection.style.display = "block";
-    optTarget.disabled = false;
-    targetLabel.style.opacity = "1";
+    if (optTarget) optTarget.disabled = false;
+    if (targetLabel) targetLabel.style.opacity = "1";
     handleBaseSelectChange();
   }
+  handleSpecialCheckboxChange();
 }
 
 function handleBaseSelectChange() {
@@ -93,15 +109,16 @@ function handleBaseSelectChange() {
   const base = parseInt(document.getElementById("overlay-base-select").value);
   const optTarget = document.getElementById("opt-target");
   const labelTarget = document.getElementById("label-opt-target");
-  const optNone = document.getElementById("opt-none");
 
   if (base === 2) {
-    if (optTarget.checked) optNone.checked = true;
-    optTarget.disabled = true;
-    labelTarget.style.opacity = "0.4";
+    if (optTarget) {
+      optTarget.checked = false;
+      optTarget.disabled = true;
+    }
+    if (labelTarget) labelTarget.style.opacity = "0.4";
   } else {
-    optTarget.disabled = false;
-    labelTarget.style.opacity = "1";
+    if (optTarget && mode !== "mix") optTarget.disabled = false;
+    if (labelTarget && mode !== "mix") labelTarget.style.opacity = "1";
   }
 
   if (base === 16 && mode !== "timeattack") {
@@ -115,6 +132,7 @@ function handleBaseSelectChange() {
   } else {
     if (hintSection) hintSection.style.display = "none";
   }
+  handleSpecialCheckboxChange();
 }
 
 function showHomeMenu() {
@@ -141,7 +159,17 @@ function showHomeMenu() {
   document.getElementById("giveup-btn").disabled = true;
   document.getElementById("pause-btn").disabled = true;
   document.getElementById("sort-btn").style.display = "none";
-  document.getElementById("game-base-badge").innerText = "--進数"; // 看板リセット
+  document.getElementById("game-base-badge").innerText = "--進数";
+
+  const optFraction = document.getElementById("opt-fraction");
+  const optTarget = document.getElementById("opt-target");
+  const optBlind = document.getElementById("opt-blind");
+  const optNone = document.getElementById("opt-none");
+
+  if (optFraction) optFraction.checked = false;
+  if (optTarget) optTarget.checked = false;
+  if (optBlind) optBlind.checked = false;
+  if (optNone) optNone.checked = true;
 
   pastProblemsHistory = [];
   renderDummyCards();
@@ -199,16 +227,13 @@ function initGameRound() {
     maxRoundTime =
       parseInt(document.getElementById("overlay-time-select").value) || 60;
     document.getElementById("sort-btn").style.display = "inline-block";
-
-    // 看板文字をごちゃまぜ用にセット
     if (badge) badge.innerText = "進数ミックス";
   } else {
     document.getElementById("sort-btn").style.display = "none";
     currentBase = parseInt(
       document.getElementById("overlay-base-select").value,
     );
-
-    if (badge) badge.innerText = `${currentBase}進数`; // 看板文字を現在の進数にセット
+    if (badge) badge.innerText = `${currentBase}進数`;
 
     if (modeTargetShift) {
       if (currentBase === 4) targetValue = Math.floor(Math.random() * 8) + 2;
@@ -237,6 +262,8 @@ function initGameRound() {
       isHintEnabled = false;
     }
   }
+
+  // ★【バグ修正】存在しなくなった古い 'game-base-select' への値セット処理（エラー原因）を安全に完全撤廃
 
   if (gameMode === "timeattack") {
     maxRoundTime = 300;
@@ -585,7 +612,6 @@ function updateFormulaDisplay() {
     if (res === undefined || isNaN(res) || !isFinite(res)) {
       resultBox.innerText = "計算結果: 数式が不完全です";
     } else {
-      // ★【バグ修正＆スッキリ化】(10進数: 10) の無駄な重複テキストを完全カット
       let displayRes = "";
       if (gameMode === "mix") {
         displayRes = res.toFixed(2).replace(".00", "");
@@ -813,11 +839,11 @@ function fastSolve(
             d = p[3];
 
           let vals = [
-            calcMath(calcMath(a, b, i), calcMath(c, d, k), j), // t=0
-            calcMath(calcMath(calcMath(a, b, i), c, j), d, k), // t=1
-            calcMath(a, calcMath(calcMath(b, c, j), d, k), i), // t=2
-            calcMath(a, calcMath(b, calcMath(c, d, k), j), i), // t=3
-            calcMath(calcMath(a, calcMath(b, c, j), i), d, k), // t=4
+            calcMath(calcMath(a, b, i), calcMath(c, d, k), j),
+            calcMath(calcMath(calcMath(a, b, i), c, j), d, k),
+            calcMath(a, calcMath(calcMath(b, c, j), d, k), i),
+            calcMath(a, calcMath(b, calcMath(c, d, k), j), i),
+            calcMath(calcMath(a, calcMath(b, c, j), i), d, k),
           ];
 
           for (let t = 0; t < 5; t++) {
@@ -1037,7 +1063,6 @@ function renderDummyCards() {
   }
 }
 
-// --- 🤝 ゲームクリア画面 ---
 function showGameClearFinal() {
   gameState = "CLEAR";
   if (timerInterval) clearInterval(timerInterval);
