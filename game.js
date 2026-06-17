@@ -2,7 +2,7 @@
 let gameMode = "normal"; // "normal" | "timeattack" | "survival" | "mix"
 let currentBase = 10;
 let targetValue = 10;
-let problemNumbers = []; // 通常時: 数値の配列 / ミックス時: {val: 10進数値, base: 進数, id: 固有認識用番号} のオブジェクト配列
+let problemNumbers = []; // 通常時: 数値的配列 / ミックス時: {val: 10進数値, base: 進数, id: 固有認識用番号} のオブジェクト配列
 let usedCardIndices = [];
 let currentFormula = [];
 let score = 0;
@@ -263,8 +263,6 @@ function initGameRound() {
     }
   }
 
-  // ★【バグ修正】存在しなくなった古い 'game-base-select' への値セット処理（エラー原因）を安全に完全撤廃
-
   if (gameMode === "timeattack") {
     maxRoundTime = 300;
     timeLeft = 300;
@@ -435,6 +433,10 @@ function timerTick() {
 
 function timeUp() {
   gameState = "TRANSITION";
+
+  // ★【新機能】タイムアップ時、隠されていた「？」カードの正体をひっくり返して全員表にする
+  renderCards();
+
   if (gameMode === "survival") {
     showGameOverSurvival();
   } else if (gameMode === "timeattack") {
@@ -448,6 +450,9 @@ function giveUpAndShowAnswer() {
   if (gameState !== "PLAYING") return;
   gameState = "TRANSITION";
   clearInterval(timerInterval);
+
+  // ★【新機能】ギブアップ時、隠されていた「？」カードの正体をひっくり返して全員表にする
+  renderCards();
 
   if (gameMode === "survival") {
     showGameOverSurvival();
@@ -566,16 +571,25 @@ function updateFormulaDisplay() {
     return;
   }
 
-  if (modeBlind && usedCardIndices.length < 2) {
+  // ガチブラインド対応：4枚全部使い切るまで途中結果を非表示にする
+  if (modeBlind && usedCardIndices.length < 4) {
     let displayText = "";
     currentFormula.forEach((item) => {
       let displayChar =
         item.text === "*" ? "×" : item.text === "/" ? "÷" : item.text;
-      displayText += displayChar + " ";
+
+      // 🌟【バグ修正2】RegExp置換を完全廃止！アイテムが保持するカード本来の「idx」を見て
+      // そのidxが隠蔽対象（blindCardIndex）の時だけ、ピンポイントで「？」に変えて結合する
+      if (item.type === "num" && item.idx === blindCardIndex) {
+        displayText += "？ ";
+      } else {
+        displayText += displayChar + " ";
+      }
     });
-    formulaBox.innerText = displayText.replace(/\d+|[A-F]+/g, "？");
+
+    formulaBox.innerText = displayText;
     resultBox.innerText =
-      "計算結果: ？？ (カードを2枚以上組み合わせてください)";
+      "計算結果: ？？ (4枚すべてのカードを数式に組み込んでください)";
     return;
   }
 
@@ -586,23 +600,18 @@ function updateFormulaDisplay() {
   currentFormula.forEach((item) => {
     let displayChar =
       item.text === "*" ? "×" : item.text === "/" ? "÷" : item.text;
-    displayText += displayChar + " ";
+
+    // 🌟【バグ修正2】すべてのカードを数式に入れきったプレイ画面上でも、
+    // 隠蔽対象のidxに紐づく文字だけを100%安全に「？」へマスクする（同値巻き込みを完全遮断）
+    if (item.type === "num" && item.idx === blindCardIndex) {
+      displayText += "？ ";
+    } else {
+      displayText += displayChar + " ";
+    }
     evalText += item.val !== undefined ? item.val : item.text;
   });
 
-  if (modeBlind && blindCardIndex !== -1) {
-    let targetText =
-      gameMode === "mix"
-        ? toBaseString(
-            problemNumbers[blindCardIndex].val,
-            problemNumbers[blindCardIndex].base,
-          )
-        : toCustomBaseString(problemNumbers[blindCardIndex]);
-    let regex = new RegExp(targetText, "g");
-    formulaBox.innerText = displayText.replace(regex, "？");
-  } else {
-    formulaBox.innerText = displayText;
-  }
+  formulaBox.innerText = displayText;
 
   try {
     if (/[^0-9+\-*/().\s]/.test(evalText.replace(/\d+/g, "")))
@@ -630,6 +639,9 @@ function updateFormulaDisplay() {
         if (gameMode !== "timeattack") {
           clearInterval(timerInterval);
         }
+
+        // ★【新機能】見事大正解を当てた瞬間も、カードの正体を一瞬でひっくり返して完全開帳する！
+        renderCards();
 
         score++;
         const scoreValSpan = document.getElementById("score-val");
@@ -1001,8 +1013,12 @@ function renderCards() {
     card.className = "card";
     card.id = `card-${idx}`;
 
+    // 🌟【開帳ロジック】答え合わせ(TRANSITION)やゲームオーバー(GAMEOVER)時は、強制的に全カードを表にする
     let isBlindTarget =
       modeBlind &&
+      gameState !== "TRANSITION" &&
+      gameState !== "GAMEOVER" &&
+      gameState !== "CLEAR" &&
       (gameMode === "mix"
         ? item.id === blindCardIndex
         : idx === blindCardIndex);
@@ -1037,6 +1053,7 @@ function renderCards() {
     if (shouldShowHint) {
       const hintSpan = document.createElement("span");
       hintSpan.className = "card-hint-text";
+      // カードがオープンのときはヒント値も明かす
       hintSpan.innerText = isBlindTarget
         ? "(??)"
         : `(${gameMode === "mix" ? item.val : item})`;
@@ -1066,6 +1083,9 @@ function renderDummyCards() {
 function showGameClearFinal() {
   gameState = "CLEAR";
   if (timerInterval) clearInterval(timerInterval);
+
+  // ゲームクリア時も確実にカードを開帳する
+  renderCards();
 
   document.getElementById("overlay-content").style.display = "flex";
   document.getElementById("overlay-title").innerHTML = "🎉 GAME CLEAR!";
