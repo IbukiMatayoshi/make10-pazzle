@@ -760,7 +760,7 @@ function buildFormulaString(p, o1, o2, o3, treeType, customBases = null) {
   if (treeType === 0) return `((${A})${op1}(${B}))${op2}((${C})${op3}(${D}))`;
   if (treeType === 1) return `(((${A})${op1}(${B}))${op2}(${C}))${op3}(${D})`;
   if (treeType === 2) return `(${A})${op1}((((${B})${op2}(${C}))${op3}(${D}))`;
-  if (treeType === 3) return `(${A})${op1}((${B})${op2}((${C})${op3}(${D})))`;
+  if (treeType === 3) return `(${A})${op1}((${B})${op2}(${C})${op3}(${D})))`;
   if (treeType === 4) return `((${A})${op1}((${B})${op2}(${C})))${op3}(${D})`;
   return "";
 }
@@ -858,7 +858,6 @@ function preGenerateProblem() {
 
   blindCardIndex = modeBlind ? Math.floor(Math.random() * 4) : -1;
 
-  // ★【バランス調整のキモ】分数解禁時、35%の確率で「分数必須問題（3,3,8,8など）」を狙い撃ちする
   let forceStrictFraction = modeFraction && Math.random() < 0.35;
 
   for (let i = 0; i < maxAttempts; i++) {
@@ -886,7 +885,6 @@ function preGenerateProblem() {
     if (isProblemRepeated(nums) && i < 100) continue;
 
     if (forceStrictFraction) {
-      // 狙い撃ち確率に当選した場合は、整数ルートでは絶対に解けない問題だけを探す
       if (
         fastSolve(nums, targetValue, true, gameMode === "mix" ? bases : null)
       ) {
@@ -899,7 +897,6 @@ function preGenerateProblem() {
         break;
       }
     } else {
-      // 通常時、または分数ONの残り65%の時は、整数・分数どちらでも解ければ即採用（無限バリエーション化）
       if (
         fastSolve(nums, targetValue, false, gameMode === "mix" ? bases : null)
       ) {
@@ -956,6 +953,8 @@ function renderCards() {
     if (gameMode === "mix") {
       const baseTag = document.createElement("div");
       baseTag.className = "card-base-tag";
+      // 【UI改善】進数ごとの識別クラス（tag-baseX）をバッジ要素に付与する
+      baseTag.classList.add(`tag-base${item.base}`);
       baseTag.innerText = `${item.base}進数`;
       card.appendChild(baseTag);
     }
@@ -1043,7 +1042,7 @@ function renderReferenceTable() {
     refTable.innerHTML = `<div class="ref-item">8進数の <b>10</b> = 10進数の 8</div>`;
   } else if (currentBase === 4) {
     refTable.innerHTML = `<div class="ref-item"><b>01</b>=1</div><div class="ref-item"><b>10</b>=4</div><div class="ref-item"><b>20</b>=8</div><div class="ref-item"><b>30</b>=12</div>`;
-  } else if (currentBase === 8) {
+  } else if (currentBase === 2) {
     refTable.innerHTML = `<div class="ref-item"><b>00</b>=0</div><div class="ref-item"><b>01</b>=1</div><div class="ref-item"><b>10</b>=2</div><div class="ref-item"><b>11</b>=3</div>`;
   } else {
     refTable.innerHTML = `<div class="ref-item">馴染み深い 10進数モード</div>`;

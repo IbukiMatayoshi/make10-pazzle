@@ -1,8 +1,12 @@
-/* ダークテーマ変数 */
+/* ==========================================================================
+   🎨 カラーユニバーサルデザイン ＆ マルチテーマ定義
+   ========================================================================== */
+
+/* 🌙 ダークテーマ変数 */
 .dark-theme {
   --primary-color: #4a90e2;
   --success-color: #2ec4b6;
-  --danger-color: #e71d36;
+  --danger-color: #ff4b5c;
   --warning-color: #ff9f1c;
   --bg-color: #1a1a22;
   --panel-bg: #0f0f14;
@@ -11,29 +15,46 @@
   --text-sub: #aaaaaa;
   --border-color: #3a3a4f;
   --formula-bg: #08080c;
+
+  /* 進数ごちゃまぜ用 CUDカラーパレット */
+  --base2-color: #707080;
+  --base4-color: #a855f7;
+  --base8-color: #ff9f1c;
+  --base10-color: #00b4d8;
+  --base16-color: #f72585;
 }
 
-/* ライトテーマ変数 */
+/* ☀️ ライトテーマ変数（【大幅改良】コントラストと識別性を極限まで強化） */
 .light-theme {
-  --primary-color: #1a62b8;
-  --success-color: #0f9f90;
-  --danger-color: #c61a2e;
-  --warning-color: #d97706;
-  --bg-color: #e5e7eb;
-  --panel-bg: #ffffff;
-  --card-bg: #f3f4f6;
-  --text-main: #1f2937;
-  --text-sub: #4b5563;
-  --border-color: #d1d5db;
-  --formula-bg: #f9fafb;
+  --primary-color: #10529a; /* より深い青にして文字の視認性を向上 */
+  --success-color: #0c7567; /* 深い緑 */
+  --danger-color: #b9041a; /* はっきりとした赤 */
+  --warning-color: #b45309; /* 濃いオレンジ */
+  --bg-color: #e5e7eb; /* 全体の背景（薄いグレー） */
+  --panel-bg: #ffffff; /* メインパネル（純白） */
+  --card-bg: #f3f4f6; /* カード背景（非常に薄いグレー） */
+  --text-main: #111827; /* メイン文字（ほぼ黒にしてコントラスト最大化） */
+  --text-sub: #374151; /* 補足文字（濃いグレー） */
+  --border-color: #9ca3af; /* 境界線（スマホの光に負けない強めのグレー） */
+  --formula-bg: #f9fafb; /* 数式ボックス背景 */
+
+  /* 白背景（ライトモード）で文字がクッキリ読める、高コントラストな進数固有カラー */
+  --base2-color: #4b5563; /* 濃いチャコールグレー */
+  --base4-color: #6d28d9; /* 深いパープル */
+  --base8-color: #c2410c; /* 濃いブラッドオレンジ */
+  --base10-color: #0369a1; /* 深いディープブルー */
+  --base16-color: #be185d; /* 濃いダークピンク */
 }
 
+/* ==========================================================================
+   🧱 共通基本スタイル設定
+   ========================================================================== */
 * {
   box-sizing: border-box;
   transition:
-    background-color 0.3s ease,
-    color 0.3s ease,
-    border-color 0.3s ease;
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
 }
 
 body {
@@ -43,7 +64,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 10px; /* スマホを考慮して一歩外側を広く */
+  padding: 10px;
   margin: 0;
   min-height: 100vh;
   justify-content: center;
@@ -53,18 +74,19 @@ body {
   background-color: var(--panel-bg);
   padding: 25px;
   border-radius: 20px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
   width: 100%;
   max-width: 480px;
   text-align: center;
   position: relative;
+  border: 1px solid var(--border-color); /* ライトモード時のパネルの輪郭を強化 */
 }
 
 .btn-theme-toggle {
   position: absolute;
   top: 15px;
   right: 15px;
-  background: transparent;
+  background: var(--card-bg);
   border: 1px solid var(--border-color);
   border-radius: 50%;
   width: 36px;
@@ -75,9 +97,10 @@ body {
   align-items: center;
   justify-content: center;
   z-index: 15;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 .btn-theme-toggle:hover {
-  background-color: rgba(128, 128, 128, 0.1);
+  background-color: rgba(128, 128, 128, 0.15);
 }
 
 h1 {
@@ -86,8 +109,10 @@ h1 {
   font-size: 24px;
   letter-spacing: 1px;
   color: var(--primary-color);
+  font-weight: 800;
 }
 
+/* 📊 ステータス表示エリア */
 .status-container {
   display: flex;
   justify-content: space-between;
@@ -102,10 +127,12 @@ h1 {
 .score-box {
   font-size: 14px;
   font-weight: bold;
+  color: var(--text-main);
 }
 .score-val {
   color: var(--warning-color);
   font-size: 20px;
+  font-weight: 800;
 }
 .timer-box {
   font-size: 14px;
@@ -113,28 +140,34 @@ h1 {
   display: flex;
   align-items: center;
   gap: 6px;
+  color: var(--text-main);
 }
 .timer-val {
   color: var(--danger-color);
   font-size: 20px;
   font-family: monospace;
+  font-weight: 800;
 }
 
+/* ⏳ タイマーバー */
 .gauge-container {
   width: 100%;
-  height: 6px;
-  background-color: rgba(128, 128, 128, 0.2);
-  border-radius: 3px;
+  height: 10px;
+  background-color: rgba(128, 128, 128, 0.15);
+  border-radius: 5px;
   margin-bottom: 15px;
   overflow: hidden;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border-color);
 }
 .gauge-bar {
   width: 100%;
   height: 100%;
-  background-color: var(--danger-color);
+  background: linear-gradient(90deg, #ffcc00, var(--warning-color));
   transition: width 1s linear;
 }
 
+/* ⚙️ 上部コントロール */
 .settings {
   margin-bottom: 15px;
   display: flex;
@@ -150,17 +183,19 @@ select,
   border: 1px solid var(--border-color);
   background-color: var(--card-bg);
   color: var(--text-main);
+  font-weight: bold;
   cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .btn-giveup {
-  border: 1px solid var(--danger-color);
+  border: 2px solid var(--danger-color);
   color: var(--danger-color);
   font-weight: bold;
   background-color: transparent;
 }
 .btn-giveup:hover {
-  background-color: rgba(231, 29, 54, 0.1);
+  background-color: rgba(255, 75, 92, 0.1);
 }
 .btn-giveup:disabled {
   border-color: var(--border-color);
@@ -178,6 +213,7 @@ select,
   background-color: transparent;
 }
 
+/* 進数早見表 */
 .reference-table {
   background-color: rgba(128, 128, 128, 0.03);
   border: 1px solid var(--border-color);
@@ -191,6 +227,7 @@ select,
   gap: 6px;
   flex-wrap: wrap;
   min-height: 35px;
+  font-weight: 500;
 }
 .ref-item {
   background: var(--panel-bg);
@@ -217,6 +254,7 @@ select,
   word-break: break-all;
 }
 
+/* 🃏 数字カードエリア */
 .card-container {
   display: flex;
   justify-content: space-between;
@@ -234,52 +272,73 @@ select,
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.08);
   user-select: none;
 }
 .card:hover {
   transform: translateY(-2px);
   border-color: var(--primary-color);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
 }
 .card.used {
-  background-color: rgba(128, 128, 128, 0.1) !important;
+  background-color: rgba(128, 128, 128, 0.12) !important;
   border-color: var(--border-color) !important;
   color: var(--text-sub) !important;
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
+  opacity: 0.6;
 }
 
 .card-main-text {
   font-size: 28px;
-  font-weight: bold;
+  font-weight: 900;
+  color: var(--text-main);
 }
 .card-hint-text {
   font-size: 11px;
   color: var(--warning-color);
   margin-top: 1px;
-  font-weight: normal;
+  font-weight: 700;
 }
 .card.used .card-hint-text {
   color: var(--text-sub) !important;
   opacity: 0.5;
 }
 
+/* 🌟 進数ミックス用・高コントラスト固有バッジ */
 .card-base-tag {
   font-size: 9px;
-  background-color: var(--primary-color);
-  color: #fff;
-  padding: 1px 4px;
+  color: #ffffff !important; /* ライトモードでも100%白文字を維持 */
+  padding: 2px 6px;
   border-radius: 4px;
-  margin-bottom: 2px;
-  font-weight: bold;
+  margin-bottom: 4px;
+  font-weight: 800;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+.tag-base2 {
+  background-color: var(--base2-color);
+}
+.tag-base4 {
+  background-color: var(--base4-color);
+}
+.tag-base8 {
+  background-color: var(--base8-color);
+}
+.tag-base10 {
+  background-color: var(--base10-color);
+}
+.tag-base16 {
+  background-color: var(--base16-color);
 }
 
+/* 📝 ディスプレイ枠 */
 .formula-box {
   border: 2px solid var(--border-color);
   padding: 10px;
   min-height: 46px;
-  font-size: 20px;
+  font-size: 22px;
   font-weight: bold;
   margin-bottom: 8px;
   border-radius: 12px;
@@ -289,6 +348,7 @@ select,
   justify-content: center;
   flex-wrap: wrap;
   gap: 4px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .result-box {
@@ -306,31 +366,32 @@ select,
 .success-text {
   color: var(--success-color);
   font-size: 16px;
-  font-weight: bold;
+  font-weight: 900;
 }
 .fail-text {
   color: var(--danger-color);
   font-size: 14px;
   display: block;
+  font-weight: 700;
 }
 
 .btn-next-stage {
   background-color: var(--primary-color);
   color: #fff;
   border: none;
-  padding: 8px 20px;
+  padding: 10px 24px;
   font-size: 14px;
   font-weight: bold;
   border-radius: 8px;
   cursor: pointer;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
 .btn-next-stage:hover {
   transform: scale(1.04);
   opacity: 0.9;
 }
 
-/* PC・標準サイズのキーボードレイアウト */
+/* ⌨️ キーボード（ライトモードでもボタンの境界線を強化） */
 .keyboard-layout {
   display: grid;
   grid-template-columns: repeat(4, 1fr) 75px;
@@ -348,7 +409,7 @@ select,
   gap: 8px;
 }
 .btn-ctrl {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: bold;
   padding: 12px 0;
   border-radius: 10px;
@@ -356,14 +417,20 @@ select,
   color: #fff;
   cursor: pointer;
   user-select: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+.btn-ctrl:active {
+  transform: translateY(1px);
+  box-shadow: none;
 }
 .btn-op {
-  background-color: var(--card-bg);
+  background-color: var(--panel-bg);
   color: var(--text-main);
-  border: 1px solid var(--border-color);
+  border: 2px solid var(--border-color);
 }
 .btn-op:hover {
-  background-color: rgba(128, 128, 128, 0.1);
+  background-color: rgba(128, 128, 128, 0.08);
+  border-color: var(--primary-color);
 }
 .btn-back {
   background-color: var(--warning-color);
@@ -377,6 +444,7 @@ select,
   flex: 1;
 }
 
+/* 🪟 オーバーレイメニュー画面 */
 .overlay {
   display: none;
   position: absolute;
@@ -395,15 +463,18 @@ select,
   overflow-y: auto;
 }
 .overlay h2 {
-  font-size: 24px;
+  font-size: 26px;
   margin-bottom: 6px;
   letter-spacing: 1px;
+  color: var(--primary-color);
+  font-weight: 900;
 }
 .overlay p {
   font-size: 13px;
   color: var(--text-sub);
   margin-bottom: 15px;
   line-height: 1.4;
+  font-weight: 600;
 }
 
 #overlay-content {
@@ -422,9 +493,9 @@ select,
 }
 .section-label {
   font-size: 12px;
-  font-weight: bold;
+  font-weight: 800;
   color: var(--text-sub);
-  margin-bottom: 4px;
+  margin-bottom: 5px;
   padding-left: 4px;
 }
 
@@ -433,23 +504,23 @@ select,
   padding: 10px 12px;
   border-radius: 10px;
   border: 2px solid var(--primary-color);
-  background-color: var(--card-bg);
-  color: var(--text-main);
+  background-color: var(--panel-bg);
+  color: var(--primary-color);
   cursor: pointer;
   width: 100%;
   font-weight: bold;
-  color: var(--primary-color);
 }
 
 .overlay-select-box {
   font-size: 13px;
   padding: 10px 12px;
   border-radius: 10px;
-  border: 1px solid var(--border-color);
-  background-color: var(--card-bg);
+  border: 2px solid var(--border-color);
+  background-color: var(--panel-bg);
   color: var(--text-main);
   cursor: pointer;
   width: 100%;
+  font-weight: 600;
 }
 
 .overlay-button-container {
@@ -469,6 +540,7 @@ select,
   font-weight: bold;
   cursor: pointer;
   width: 100%;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 .btn-trigger:hover {
   transform: scale(1.02);
@@ -478,8 +550,8 @@ select,
   color: #fff;
 }
 .btn-sub-trigger {
-  background-color: var(--card-bg);
-  border: 1px solid var(--danger-color);
+  background-color: var(--panel-bg);
+  border: 2px solid var(--danger-color);
   color: var(--danger-color);
 }
 
@@ -502,7 +574,7 @@ select,
 
 .btn-toggle-options {
   background-color: transparent;
-  border: 1px dashed var(--primary-color);
+  border: 2px dashed var(--primary-color);
   color: var(--primary-color);
   padding: 8px 16px;
   border-radius: 8px;
@@ -515,7 +587,7 @@ select,
   max-width: 280px;
 }
 .btn-toggle-options:hover {
-  background-color: rgba(74, 144, 226, 0.05);
+  background-color: rgba(16, 82, 154, 0.05);
 }
 
 .difficulty-options-container {
@@ -526,7 +598,7 @@ select,
   background: rgba(128, 128, 128, 0.05);
   padding: 12px;
   border-radius: 10px;
-  border: 1px solid var(--border-color);
+  border: 2px solid var(--border-color);
   margin-bottom: 12px;
   width: 100%;
   max-width: 280px;
@@ -542,6 +614,7 @@ select,
   user-select: none;
   width: 100%;
   max-width: 220px;
+  font-weight: 600;
 }
 .checkbox-label input {
   cursor: pointer;
@@ -550,52 +623,43 @@ select,
   margin: 0;
 }
 
-/* ==========================================================================
-   📱 【追加】スマートフォンサイズ（画面幅480px以下）のレスポンシブ最適化
-   ========================================================================== */
+/* 📱 スマートフォンサイズ（画面幅480px以下） */
 @media screen and (max-width: 480px) {
   body {
-    padding: 6px; /* 端の余白をさらに削って広く */
+    padding: 6px;
   }
-
   .container {
-    padding: 15px 12px; /* 内側の余白を詰め、スマホの液晶いっぱいに広げる */
+    padding: 15px 10px;
     border-radius: 14px;
   }
-
   h1 {
     font-size: 20px;
     margin-bottom: 10px;
   }
-
   .status-container {
     padding: 8px 10px;
     margin-bottom: 10px;
   }
-
   .score-box {
-    font-size: 13px;
+    font-size: 12px;
   }
   .score-val {
-    font-size: 17px;
+    font-size: 16px;
   }
   .timer-val {
-    font-size: 17px;
+    font-size: 16px;
   }
-
   .target-info {
-    font-size: 14px;
+    font-size: 13px;
     padding: 10px;
     margin-bottom: 12px;
   }
-
-  /* カードをスマホ幅に完全フィッティング */
   .card-container {
     gap: 6px;
     margin-bottom: 12px;
   }
   .card-main-text {
-    font-size: 22px; /* スマホで文字が飛び出さないように調整 */
+    font-size: 22px;
   }
   .card-hint-text {
     font-size: 10px;
@@ -604,56 +668,42 @@ select,
     font-size: 8px;
     padding: 1px 3px;
   }
-
   .formula-box {
     font-size: 18px;
     min-height: 42px;
     padding: 8px;
   }
-
   .result-box {
     min-height: 60px;
     margin-bottom: 12px;
     font-size: 13px;
   }
-
-  /* 🎮 【キモ】スマホ用キーボードレイアウトの1列等幅化（崩れを完全に防止） */
   .keyboard-layout {
     display: grid;
-    grid-template-columns: repeat(
-      5,
-      1fr
-    ); /* 5列等幅に変更し、はみ出しをゼロにする */
+    grid-template-columns: repeat(5, 1fr);
     gap: 6px;
   }
-
   .grid-inputs {
     grid-template-columns: repeat(4, 1fr);
     grid-column: span 4;
     gap: 6px;
   }
-
-  /* 特殊演算子ボタンの調整（末尾文字消すの2列結合） */
   .grid-inputs button:nth-child(7) {
     grid-column: span 2;
   }
-
-  /* 戻る・全消去ボタンを綺麗に右側の5列目に縦並びで結合 */
   .grid-actions {
     grid-column: span 1;
     display: flex;
     flex-direction: column;
     gap: 6px;
   }
-
   .btn-ctrl {
     font-size: 15px;
-    padding: 10px 0; /* スマホで押しやすい、かつ縦に伸びすぎない高さ */
+    padding: 10px 0;
   }
-
   .btn-back,
   .btn-clear {
-    font-size: 11px;
-    line-height: 1.2;
+    font-size: 10px;
+    line-height: 1.1;
   }
 }
